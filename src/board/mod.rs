@@ -33,4 +33,10 @@ impl Board {
     pub fn new() -> Board {
         Board { state : vec![vec![Square::Empty; 19]; 19] }
     }
+
+    pub fn play_at(&self, x: usize, y: usize, color: Square) -> Board {
+        let mut clone = self.clone();
+        clone.state[y][x] = color;
+        clone
+    }
 }
