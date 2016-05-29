@@ -1,8 +1,9 @@
+#[macro_use]
+extern crate itertools;
+
 extern crate gomoku;
 
-pub mod board;
-
-use board::{Board, Square};
+use gomoku::board;
 
 fn main() {
   let board = board::Board::new();

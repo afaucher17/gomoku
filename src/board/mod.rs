@@ -1,6 +1,10 @@
+extern crate itertools;
+
 use std::fmt;
+use board::itertools::Itertools;
 
 #[derive(Clone)]
+#[derive(PartialEq)]
 pub enum Square
 {
     Black,
@@ -38,5 +42,10 @@ impl Board {
         let mut clone = self.clone();
         clone.state[y][x] = color;
         clone
+    }
+
+    pub fn check_victory(&self, color: Square) -> bool {
+        self.state.iter().any(|v| v.iter().group_by(|elt| **elt == color).any(|(_, value)| value.iter().count() >= 5))
+           || (0..19).any(|i| (0..19).map(|j| self.state[i][j].clone()).collect::<Vec<Square>>().iter().group_by(|elt| **elt == color).any(|(_, value)| value.iter().count() >= 5))
     }
 }

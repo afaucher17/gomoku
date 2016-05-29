@@ -15,4 +15,4 @@ doc = false
 unstable = [] # for travis-cargo
 
 [dependencies]
-
+itertools = "0.4"
