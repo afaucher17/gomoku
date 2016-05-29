@@ -21,11 +21,16 @@ impl fmt::Display for Board
         write!(f, "{}", self.state.iter()
                .map(|line| line.iter()
                     .map(|square| match *square {
-                        Square::Empty => " ",
+                        Square::Empty => "_",
                         Square::Black => "B",
                         Square::White => "W"
-                    }).collect::<String>()
+                    }).collect::<String>() + "\n"
                 ).collect::<String>())
     }
 }
 
+impl Board {
+    pub fn new() -> Board {
+        Board { state : vec![vec![Square::Empty; 19]; 19] }
+    }
+}
