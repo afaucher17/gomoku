@@ -4,6 +4,7 @@ use std::fmt;
 use board::itertools::Itertools;
 
 #[derive(Clone)]
+#[derive(Debug)]
 #[derive(PartialEq)]
 pub enum Square
 {
@@ -45,7 +46,12 @@ impl Board {
     }
 
     pub fn check_victory(&self, color: Square) -> bool {
-        self.state.iter().any(|v| v.iter().group_by(|elt| **elt == color).any(|(_, value)| value.iter().count() >= 5))
-           || (0..19).any(|i| (0..19).map(|j| self.state[i][j].clone()).collect::<Vec<Square>>().iter().group_by(|elt| **elt == color).any(|(_, value)| value.iter().count() >= 5))
+        self.state.iter().any(|v| v.iter().group_by(|elt| **elt == color)
+                            .any(|(key, value)| key && value.iter().count() >= 5))
+           || (0..19).any(|i| (0..19)
+                          .map(|j| self.state[i][j].clone())
+                          .collect::<Vec<Square>>().iter()
+                          .group_by(|elt| **elt == color)
+                          .any(|(key, value)| key && value.iter().count() >= 5))
     }
 }

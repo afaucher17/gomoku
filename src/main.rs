@@ -7,5 +7,5 @@ use gomoku::board;
 
 fn main() {
   let board = board::Board::new();
-  print!("{}", board)
+  print!("{} {}", board, board.check_victory(board::Square::Black));
 }
