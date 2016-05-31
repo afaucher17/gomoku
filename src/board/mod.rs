@@ -95,6 +95,6 @@ impl Board {
     }
 
     pub fn check_free_threes(&self, x: usize, y: usize, color: Square) -> bool {
-        
+        true
     }
 }
