@@ -94,7 +94,7 @@ impl Board {
             || (self.rec_explo(color, x, y, 1, -1, 1) + self.rec_explo(color, x, y, -1, 1, 0)) > 4
     }
 
-    pub fn check_free_threes(&self, x: usize, y:usize, color: Square) -> bool {
-        true
+    pub fn check_free_threes(&self, x: usize, y: usize, color: Square) -> bool {
+        
     }
 }
