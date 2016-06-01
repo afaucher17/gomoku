@@ -1,12 +1,11 @@
 #[macro_use]
-extern crate itertools;
-
 extern crate gomoku;
 
 use gomoku::board;
 
 fn main() {
   let mut board = board::Board::new();
+  /*
   board.state[15][13] = board::Square::Black;
   board.state[14][14] = board::Square::Black;
   board.state[13][15] = board::Square::White;
@@ -20,11 +19,11 @@ fn main() {
   board.state[15][12] = board::Square::Black;
   board.state[14][12] = board::Square::Black;
   board.state[13][12] = board::Square::White;
-  println!("{} {}", board, board.play_at(16, 12, &board::Square::White).unwrap());
-  board = board::Board::new();
-  board.state[0][0] = board::Square::Black;
+  println!("{} {}", board, board.play_at(16, 12, &board::Square::White).unwrap());*/
   board.state[1][1] = board::Square::Black;
-  board.state[3][4] = board::Square::Black;
-  board.state[3][5] = board::Square::Black;
-  println!("{}{}", board, board.check_free_threes(3, 3, board::Square::Black));
+  board.state[2][2] = board::Square::Black;
+  board.state[4][5] = board::Square::Black;
+  board.state[4][6] = board::Square::Black;
+  println!("{}\n{:?}", board, board.play_at(4, 4, &board::Square::Black));
+  println!("{}\n{:?}", board, board.play_at(15, 15, &board::Square::Black));
 }

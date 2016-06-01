@@ -1,8 +1,6 @@
 extern crate itertools;
 
 use std::fmt;
-//use board::itertools::Itertools;
-
 
 #[derive(Clone)]
 #[derive(Debug)]
@@ -37,6 +35,21 @@ impl fmt::Display for Board
     }
 }
 
+impl fmt::Debug for Board
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
+    {
+        write!(f, "{} Black Captures: {} White Captures: {}", self.state.iter()
+               .map(|line| line.iter()
+                    .map(|square| match *square {
+                        Square::Empty => "_",
+                        Square::Black => "B",
+                        Square::White => "W"
+                    }).collect::<String>() + "\n"
+                   ).collect::<String>(), self.b_capture, self.w_capture)
+    }
+}
+
 impl Square {
     pub fn opposite(&self) -> Square
     {
@@ -55,12 +68,15 @@ impl Board {
 
     pub fn play_at(&self, x: usize, y: usize, color: &Square) -> Option<Board> {
         let mut clone = self.clone();
-        if clone.state[x][y] != Square::Empty {
+        if !(0..19).contains(x) || !(0..19).contains(y) || clone.state[x][y] != Square::Empty {
             None
         }
         else {
             clone.state[x][y] = color.clone();
-            Some(clone.check_capture(color, (x, y)))
+            if !clone.check_free_threes(x as i32, y as i32, color) {
+                Some(clone.check_capture(color, (x, y)))
+            }
+            else { None }
         }
     }
 
@@ -114,42 +130,6 @@ impl Board {
         board.clone()
     }
 
-    /*pub fn check_aligned(&self, color: Square) -> bool {
-        //  Board line exploration:
-        self.state.iter().any(|v| v.iter()
-                              .group_by(|elt| **elt == color)
-                              //.inspect(|x| println!("{:?}", x))
-                              .any(|(key, value)| key && value.iter().count() >= 5))
-        //  Board column exploration:
-            || (0..19).any(|i| (0..19)
-                           .map(|j| self.state[j][i].clone())
-                           .collect::<Vec<Square>>()
-                           .iter()
-                           .group_by(|elt| **elt == color)
-                           .any(|(key, value)| key && value.iter().count() >= 5))
-        //  Board down-right diagonal exploration:
-            || (0..38).any(|i: i32| (0..19)
-                           .filter(|j: &i32| (i - 19) + j < 19 && (i - 19) + j >= 0)
-                           //.inspect(|j: &i32| println!("[{}][{}]", (i - 19) + j, j))
-                           .map(|j: i32| self.state[((i - 19) + j) as usize][j as usize].clone())
-                           .collect::<Vec<Square>>()
-                           .iter()
-                           .group_by(|elt| **elt == color)
-                           //.inspect(|x| println!("{:?}", x))
-                           .any(|(key, value)| key && value.iter().count() >= 5))
-        //  Board up-right diagonal exploration
-            || (0..38).any(|i: i32| (0..19).rev()
-                           .filter(|j: &i32| i - j < 19 && i - j >= 0)
-                           //.inspect(|j: &i32| println!("[{}][{}]", i - j, j))
-                           .map(|j: i32| self.state[(i - j) as usize][j as usize].clone())
-                           .collect::<Vec<Square>>()
-                           .iter()
-                           .group_by(|elt| **elt == color)
-                           //.inspect(|x| println!("{:?}", x))
-                           .any(|(key, value)| key && value.iter().count() >= 5))
-
-    }*/
-
     fn rec_explo(&self, color: &Square, x: i32, y: i32, add_x: i32, add_y: i32, acc: i32) -> i32 {
         if acc > 4 || x + add_x > 18 || y + add_y > 18 || x + add_x < 0 || y + add_y < 0
             || self.state[(x + add_x) as usize][(y + add_y) as usize] != *color { acc }
@@ -163,26 +143,26 @@ impl Board {
             || (self.rec_explo(color, x, y, 1, -1, 1) + self.rec_explo(color, x, y, -1, 1, 0)) > 4
     }
 
-    pub fn check_free_threes(&self, x: usize, y: usize, color: Square) -> bool {
+    pub fn check_free_threes(&self, x: i32, y: i32, color: &Square) -> bool {
         let sq_to_char = |sq: &Square| match *sq { Square::Black => 'B', Square::White => 'W', Square::Empty => ' ' };
-        let p = vec![" x xx ", " xx x ", "  xxx ", " xxx  "];
-        p.iter().map(|s| s.replace("x", match color { Square::Black => "B", Square::White => "W", _ => " " })).collect::<String>();
+        let p = vec![" x xx ", " xx x ", "  xxx ", " xxx  "].iter()
+            .map(|s| s.replace("x", match *color { Square::Black => "B", Square::White => "W", _ => " " })).collect::<Vec<String>>();
         let mut t = vec![String::new(); 4];
-        t[0] = (0..8).filter(|i| (x + i) as i32 - 4 < 19 && (x + i) as i32 - 4 >= 0)
-            .inspect(|i| println!("<{}>", i))
-            .map(|i| sq_to_char(&self.state[x + i][y])).collect::<String>();
-        t[1] = (0..8).filter(|i| (y + i) as i32 - 4 < 19 && (y + i) as i32 - 4 >= 0)
-            .inspect(|i| println!("<{}>", i))
-            .map(|i| sq_to_char(&self.state[x][y + i])).collect::<String>();
-        t[2] = (0..8).filter(|i| (x + i) as i32 - 4 < 19 && (x + i) as i32 - 4 >= 0 && (y + i) as i32 - 4 < 19 && y as i32 - *i as i32 - 4 >= 0)
-            .inspect(|i| println!("<{}>", i))
-            .map(|i| sq_to_char(&self.state[x + i][y + i])).collect::<String>();
-        t[3] = (0..8).filter(|i| (x + i) as i32 - 4 < 19 && (x + i) as i32 - 4 >= 0 && y as i32 - *i as i32 - 4 < 19 && y as i32 - *i as i32 - 4 >= 0)
-            .inspect(|i| println!("<{}>", i))
-            .map(|i| sq_to_char(&self.state[x + i][y - i])).collect::<String>();
-        t.iter().inspect(|s| println!("[{}]", s)).filter(|s| s.find(p[0]).is_some()
-                        || s.find(p[1]).is_some()
-                        || s.find(p[2]).is_some()
-                        || s.find(p[3]).is_some()).count() > 1
+        t[0] = (0..9).map(|i| i as i32 - 4)
+            .filter(|i| x + i < 19 && x + i >= 0)
+            .map(|i| sq_to_char(&self.state[(x + i) as usize][y as usize])).collect::<String>();
+        t[1] = (0..9).map(|i| i as i32 - 4)
+            .filter(|i| y + i < 19 && y + i >= 0)
+            .map(|i| sq_to_char(&self.state[x as usize][(y + i) as usize])).collect::<String>();
+        t[2] = (0..9).map(|i| i as i32 - 4)
+            .filter(|i| x + i < 19 && x + i >= 0 && y + i < 19 && y - *i >= 0)
+            .map(|i| sq_to_char(&self.state[(x + i) as usize][(y + i) as usize])).collect::<String>();
+        t[3] = (0..9).map(|i| i as i32 - 4)
+            .filter(|i| x + i < 19 && x + i >= 0 && y - *i < 19 && y - *i >= 0)
+            .map(|i| sq_to_char(&self.state[(x + i) as usize][(y - i) as usize])).collect::<String>();
+        t.iter().filter(|s| s.find(&p[0]).is_some()
+                        || s.find(&p[1]).is_some()
+                        || s.find(&p[2]).is_some()
+                        || s.find(&p[3]).is_some()).count() > 1
     }
 }
