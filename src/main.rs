@@ -21,4 +21,10 @@ fn main() {
   board.state[14][12] = board::Square::Black;
   board.state[13][12] = board::Square::White;
   println!("{} {}", board, board.play_at(16, 12, &board::Square::White).unwrap());
+  board = board::Board::new();
+  board.state[0][0] = board::Square::Black;
+  board.state[1][1] = board::Square::Black;
+  board.state[3][4] = board::Square::Black;
+  board.state[3][5] = board::Square::Black;
+  println!("{}{}", board, board.check_free_threes(3, 3, board::Square::Black));
 }
