@@ -1,7 +1,7 @@
 extern crate itertools;
 
 use std::fmt;
-use board::itertools::Itertools;
+//use board::itertools::Itertools;
 
 #[derive(Clone)]
 #[derive(Debug)]
@@ -95,6 +95,25 @@ impl Board {
     }
 
     pub fn check_free_threes(&self, x: usize, y: usize, color: Square) -> bool {
-        true
+        let sq_to_char = |sq: &Square| match *sq { Square::Black => 'B', Square::White => 'W', Square::Empty => ' ' };
+        let p = vec![" x xx ", " xx x ", "  xxx ", " xxx  "];
+        p.iter().map(|s| s.replace("x", match color { Square::Black => "B", Square::White => "W", _ => " " })).collect::<String>();
+        let mut t = vec![String::new(); 4];
+        t[0] = (0..8).filter(|i| (x + i) as i32 - 4 < 19 && (x + i) as i32 - 4 >= 0)
+            .inspect(|i| println!("<{}>", i))
+            .map(|i| sq_to_char(&self.state[x + i][y])).collect::<String>();
+        t[1] = (0..8).filter(|i| (y + i) as i32 - 4 < 19 && (y + i) as i32 - 4 >= 0)
+            .inspect(|i| println!("<{}>", i))
+            .map(|i| sq_to_char(&self.state[x][y + i])).collect::<String>();
+        t[2] = (0..8).filter(|i| (x + i) as i32 - 4 < 19 && (x + i) as i32 - 4 >= 0 && (y + i) as i32 - 4 < 19 && y as i32 - *i as i32 - 4 >= 0)
+            .inspect(|i| println!("<{}>", i))
+            .map(|i| sq_to_char(&self.state[x + i][y + i])).collect::<String>();
+        t[3] = (0..8).filter(|i| (x + i) as i32 - 4 < 19 && (x + i) as i32 - 4 >= 0 && y as i32 - *i as i32 - 4 < 19 && y as i32 - *i as i32 - 4 >= 0)
+            .inspect(|i| println!("<{}>", i))
+            .map(|i| sq_to_char(&self.state[x + i][y - i])).collect::<String>();
+        t.iter().inspect(|s| println!("[{}]", s)).filter(|s| s.find(p[0]).is_some()
+                        || s.find(p[1]).is_some()
+                        || s.find(p[2]).is_some()
+                        || s.find(p[3]).is_some()).count() > 1
     }
 }
