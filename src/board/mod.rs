@@ -166,3 +166,8 @@ impl Board {
                         || s.find(&p[3]).is_some()).count() > 1
     }
 }
+
+//Playable board
+pub fn playable_board(&self, x: i32, y: i32)
+{
+}
