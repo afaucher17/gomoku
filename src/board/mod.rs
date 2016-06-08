@@ -165,9 +165,45 @@ impl Board {
                         || s.find(&p[2]).is_some()
                         || s.find(&p[3]).is_some()).count() > 1
     }
-}
 
-//Playable board
-pub fn playable_board(&self, x: i32, y: i32)
-{
+    //Playable board
+    pub fn update_playables(&self, x: i32, y: i32, plays: Vec<(usize, usize)>) -> Vec<(usize, usize)> {
+        let mut updated = plays.clone();
+        updated.iter().position(|&e| x as usize == e.0 && y as usize == e.1).map(|e| updated.remove(e));
+        if self.state[(x + 1) as usize][y as usize] == Square::Empty
+            && (0..19).contains(x + 1) {
+            updated.push(((x + 1) as usize, y as usize))
+        }
+        if self.state[(x + 1) as usize][(y + 1) as usize] == Square::Empty
+            && (0..19).contains(x + 1) && (0..19).contains(y + 1) {
+            updated.push(((x + 1) as usize, (y + 1) as usize))
+        }
+        if self.state[x as usize][(y + 1) as usize] == Square::Empty
+            && (0..19).contains(y + 1) {
+            updated.push((x as usize, (y + 1) as usize))
+        }
+        if self.state[(x - 1) as usize][(y + 1) as usize] == Square::Empty
+            && (0..19).contains(x - 1) && (0..19).contains(y + 1) {
+            updated.push(((x - 1) as usize, (y + 1) as usize))
+        }
+        if self.state[(x - 1) as usize][y as usize] == Square::Empty
+            && (0..19).contains(x - 1) {
+            updated.push(((x - 1) as usize, y as usize))
+        }
+        if self.state[(x - 1) as usize][(y - 1) as usize] == Square::Empty
+            && (0..19).contains(x - 1) && (0..19).contains(y - 1) {
+            updated.push(((x - 1) as usize, (y - 1) as usize))
+        }
+        if self.state[x as usize][(y - 1) as usize] == Square::Empty
+            && (0..19).contains(y - 1) {
+            updated.push((x as usize, (y - 1) as usize))
+        }
+        if self.state[(x + 1) as usize][(y - 1) as usize] == Square::Empty
+            && (0..19).contains(x + 1) && (0..19).contains(y - 1) {
+            updated.push(((x + 1) as usize, (y - 1) as usize))
+        }
+        updated.sort_by(|a, b| a.cmp(&b));
+        updated.dedup();
+        updated
+    }
 }
