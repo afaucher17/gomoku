@@ -4,20 +4,25 @@ extern crate gomoku;
 use gomoku::board;
 
 fn main() {
-  let mut board = board::Board::new();
-  let mut playables: Vec<(usize, usize)> = Vec::new();
-  board = board.play_at(4, 4, &board::Square::Black).unwrap();
-  playables = board.update_playables(4, 4, playables);
-  println!("{}", board);
-  for tuple in playables.clone() {
-    print!("({}, {})", tuple.0, tuple.1)
-  }
-  println!("");
-  board = board.play_at(5, 5, &board::Square::Black).unwrap();
-  playables = board.update_playables(5, 5, playables);
-  println!("{}", board);
-  for tuple in playables.clone() {
-    print!("({}, {})", tuple.0, tuple.1)
-  }
-  println!("");
+    let board = board::Board::from(concat!(
+    "___________________\n",
+    "_BBB_W______BBWW___\n",
+    "___________________\n",
+    "____W______________\n",
+    "_____B_____________\n",
+    "______B____________\n",
+    "_______B___________\n",
+    "________W__________\n",
+    "___________________\n",
+    "_________B_________\n",
+    "________B__________\n",
+    "_______W___________\n",
+    "______W____________\n",
+    "_____W_____________\n",
+    "______________B____\n",
+    "______________B____\n",
+    "______________B____\n",
+    "______________W____\n",
+    "______________W____\n"));
+    println!("{}", board);
 }

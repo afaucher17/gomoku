@@ -50,6 +50,21 @@ impl fmt::Debug for Board
     }
 }
 
+impl<'a> From<&'a str> for Board
+{
+    fn from(s: &'a str) -> Self {
+        Board { state: s.split('\n').collect::<Vec<&'a str>>()
+            .iter()
+            .map(|s| s.chars().map(|c| match c {
+                                'B' => Square::Black,
+                                'W' => Square::White,
+                                _ => Square::Empty
+                            }).collect::<Vec<Square>>())
+            .collect::<Vec<Vec<Square>>>(),
+            b_capture: 0, w_capture: 0 }
+    }
+}
+
 impl Square {
     pub fn opposite(&self) -> Square
     {
@@ -206,4 +221,6 @@ impl Board {
         updated.dedup();
         updated
     }
+
+
 }
