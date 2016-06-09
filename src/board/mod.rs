@@ -13,6 +13,7 @@ pub enum Square
 }
 
 #[derive(Clone)]
+#[derive(PartialEq)]
 pub struct Board
 {
     pub state: Vec<Vec<Square>>,
@@ -80,6 +81,10 @@ impl Board {
         }
     }
 
+    fn evaluation(&self, color: &Square) -> usize {
+        self.state.iter().fold(0, |acc, line| acc + line.iter().filter(|&square| square == color).count())
+    }
+
     fn check_capture(&self, color: &Square, pos: (usize, usize)) -> Board {
         let (x, y) = pos;
         let mut board = self.clone();
@@ -93,39 +98,22 @@ impl Board {
                 }
                 _ => ()
             };
-
             // East
-            if x + 4 < 19 {
-                capture(&(0..4).map(|i| (self.state[x + i][y].clone(), (x + i, y))).collect::<Vec<_>>());
-            }
+            if x + 4 < 19 { capture(&(0..4).map(|i| (self.state[x + i][y].clone(), (x + i, y))).collect::<Vec<_>>()) }
             // West
-            if x >= 4 {
-                capture(&(0..4).map(|i| (self.state[x - i][y].clone(), (x - i, y))).collect::<Vec<_>>());
-            }
+            if x >= 4 { capture(&(0..4).map(|i| (self.state[x - i][y].clone(), (x - i, y))).collect::<Vec<_>>()) }
             // South
-            if y + 4 < 19 {
-                capture(&(0..4).map(|i| (self.state[x][y + i].clone(), (x, y + i))).collect::<Vec<_>>());
-            }
+            if y + 4 < 19 { capture(&(0..4).map(|i| (self.state[x][y + i].clone(), (x, y + i))).collect::<Vec<_>>()) }
             // North
-            if y >= 4 {
-                capture(&(0..4).map(|i| (self.state[x][y - i].clone(), (x, y - i))).collect::<Vec<_>>());
-            }
+            if y >= 4 { capture(&(0..4).map(|i| (self.state[x][y - i].clone(), (x, y - i))).collect::<Vec<_>>()) }
             // North-East
-            if x + 4 < 19 && y + 4 < 19 {
-                capture(&(0..4).map(|i| (self.state[x + i][y + i].clone(), (x + i, y + i))).collect::<Vec<_>>());
-            }
+            if x + 4 < 19 && y + 4 < 19 { capture(&(0..4).map(|i| (self.state[x + i][y + i].clone(), (x + i, y + i))).collect::<Vec<_>>()) }
             // North-West
-            if x + 4 < 19 && y >= 4 {
-                capture(&(0..4).map(|i| (self.state[x + i][y - i].clone(), (x + i, y - i))).collect::<Vec<_>>());
-            }
+            if x + 4 < 19 && y >= 4 { capture(&(0..4).map(|i| (self.state[x + i][y - i].clone(), (x + i, y - i))).collect::<Vec<_>>()) }
             // South-East
-            if x >= 4 && y + 4 < 19 {
-                capture(&(0..4).map(|i| (self.state[x - i][y + i].clone(), (x - i, y + i))).collect::<Vec<_>>());
-            }
+            if x >= 4 && y + 4 < 19 { capture(&(0..4).map(|i| (self.state[x - i][y + i].clone(), (x - i, y + i))).collect::<Vec<_>>()) }
             // South-West
-            if x >= 4 && y >= 4 {
-                capture(&(0..4).map(|i| (self.state[x - i][y - i].clone(), (x - i, y - i))).collect::<Vec<_>>());
-            }
+            if x >= 4 && y >= 4 { capture(&(0..4).map(|i| (self.state[x - i][y - i].clone(), (x - i, y - i))).collect::<Vec<_>>()) }
         }
         board.clone()
     }
@@ -141,6 +129,22 @@ impl Board {
             || (self.rec_explo(color, x, y, 1, 0, 1) + self.rec_explo(color, x, y, -1, 0, 0)) > 4
             || (self.rec_explo(color, x, y, 0, 1, 1) + self.rec_explo(color, x, y, 0, -1, 0)) > 4
             || (self.rec_explo(color, x, y, 1, -1, 1) + self.rec_explo(color, x, y, -1, 1, 0)) > 4
+    }
+
+    pub fn check_patterns(&self, color: &Square) -> usize {
+        let sq_to_char = |sq: &Square| match *sq { Square::Black => 'B', Square::White => 'W', Square::Empty => ' ' };
+        let p = vec![("yxxxx ", 0), (" xxxxy", 1), (" xxx ", 2), ("y xxx  ", 3), ("  xxx y", 4), (" xxxx ", 5), (" x xx ", 6), (" xx ", 7), (" yyx", 8), ("xyy ", 9)].iter()
+            .map(|&(s, _)| s.replace("x", match *color { Square::Black => "B", Square::White => "W", _ => " " })
+                 .replace("y", match *color { Square::Black => "B", Square::White => "W", _ => " " })).collect::<Vec<String>>();
+        let mut t = Vec::new();
+        t.push((0..19).map(|i| (0..19).map(|j| sq_to_char(&self.state[i][j])).collect::<String>()).collect::<String>());
+        t.push((0..19).map(|i| (0..19).map(|j| sq_to_char(&self.state[j][i])).collect::<String>()).collect::<String>());
+        t.push((0..19 * 2).map(|i: i32| (0..19).filter(|j: &i32| (i - 19) + j < 19 && (i - 19) + j >= 0)
+                                       .map(|j: i32| sq_to_char(&self.state[((i - 19) + j) as usize][j as usize])).collect::<String>()).collect::<String>());
+        t.push((0..19 * 2).map(|i: i32| (0..19).filter(|j: &i32| (i - j) < 19 && (i - j) >= 0)
+                                       .map(|j: i32| sq_to_char(&self.state[(i - j) as usize][j as usize])).collect::<String>()).collect::<String>());
+        t.iter().fold(0, |acc, s| p.iter()
+                      .fold(0, |acc2, &pattern| if s.find(pattern.0).is_some() { acc2 + pattern.1 } else { acc2 }) + acc)
     }
 
     pub fn check_free_threes(&self, x: i32, y: i32, color: &Square) -> bool {
