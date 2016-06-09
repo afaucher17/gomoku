@@ -4,26 +4,26 @@ extern crate gomoku;
 use gomoku::board;
 
 fn main() {
-  let mut board = board::Board::new();
-  /*
-  board.state[15][13] = board::Square::Black;
-  board.state[14][14] = board::Square::Black;
-  board.state[13][15] = board::Square::White;
-  board.state[16][11] = board::Square::Black;
-  board.state[16][10] = board::Square::Black;
-  board.state[16][9] = board::Square::White;
-  board.state[16][13] = board::Square::Black;
-  board.state[16][14] = board::Square::Black;
-  board.state[16][15] =  board::Square::White;
-  board.state[16][16] = board::Square::White;
-  board.state[15][12] = board::Square::Black;
-  board.state[14][12] = board::Square::Black;
-  board.state[13][12] = board::Square::White;
-  println!("{} {}", board, board.play_at(16, 12, &board::Square::White).unwrap());*/
-  board.state[1][1] = board::Square::Black;
-  board.state[2][2] = board::Square::Black;
-  board.state[4][5] = board::Square::Black;
-  board.state[4][6] = board::Square::Black;
-  println!("{}\n{:?}", board, board.play_at(4, 4, &board::Square::Black));
-  println!("{}\n{:?}", board, board.play_at(15, 15, &board::Square::Black));
+    let board = board::Board::from(concat!(
+    "___________________\n",
+    "_BBB_W______BBWW___\n",
+    "___________________\n",
+    "____W______________\n",
+    "_____B____B________\n",
+    "______B____W_______\n",
+    "_______B____W______\n",
+    "________W____W_____\n",
+    "______________B____\n",
+    "_________B___W_____\n",
+    "________B___W______\n",
+    "_______W___W_______\n",
+    "______W____________\n",
+    "_____W___W_________\n",
+    "_________W____B____\n",
+    "_________W____B____\n",
+    "__WWWW________B____\n",
+    "______________W____\n",
+    "______________W____\n"));
+    println!("{}\n{}", board, board.check_patterns(&board::Square::Black));
+    println!("{}\n{}", board, board.check_patterns(&board::Square::White));
 }
