@@ -1,6 +1,7 @@
 extern crate itertools;
 
 use std::fmt;
+use std::cmp;
 
 #[derive(Clone)]
 #[derive(Debug)]
@@ -191,11 +192,80 @@ impl Board {
                 + self.rec_explo(color, x, y, -1, 1, 0)) > 4
     }
 
+    pub fn check_threats(&self, color: &Square) -> Vec<(usize, usize)> {
+        let sq_to_char = |sq: &Square| match *sq {
+            Square::Black => 'B', Square::White => 'W', Square::Empty => '-'
+        };
+
+        let p = vec![("xxxx-", vec![4]), ("xxx-x", vec![3]),
+        ("xx-xx", vec![2]), ("x-xxx", vec![1]), ("-xxxx", vec![0]),
+        ("-yyyy", vec![0]), ("y-yyy", vec![1]), ("yy-yy", vec![2]),
+        ("yyy-y", vec![3]), ("yyyy-", vec![4]), ("--yyy--", vec![0, 4]),
+        ("x-yyy--", vec![4, 5, 1]), ("--yyy-x", vec![1, 0, 4]),
+        ("-y-yy-", vec![0, 2, 5]), ("-yy-y-", vec![0, 4, 5])].iter().map(|&(s, ref v)|
+                 (s.replace("x", match *color {
+                     Square::Black => "B", Square::White => "W", _ => " "
+                 })
+                 .replace("y", match color.opposite() {
+                     Square::Black => "B", Square::White => "W", _ => " "
+                 }), v.clone())).collect::<Vec<_>>();
+
+        struct Right {
+            data: String,
+            fun: Box<Fn(usize) -> (usize, usize)>,
+        }
+
+        let mut t: Vec<Right> = Vec::new();
+        {
+            let mut vert = (0..19).map(|i| Right { data: (0..19)
+                                       .map(|j| sq_to_char(&self.state[i][j]))
+                                       .collect::<String>(),
+                                       fun: Box::new(move |v| (i, v as usize)) }
+                                       ).collect::<Vec<Right>>();
+            let mut hor = (0..19).map(|i| Right { data: (0..19)
+                                        .map(|j| sq_to_char(&self.state[j][i]))
+                                        .collect::<String>(),
+                                        fun: Box::new(move |v| (v as usize, i)) } 
+                                        ).collect::<Vec<Right>>();
+            let mut diagup = (0..37)
+                .map(|i| Right { data: (0..19 - (19 - (i as i32 + 1)).abs())
+                    .map(|j| sq_to_char(
+                        &self.state[(cmp::max(0, i - 18) + j) as usize][(cmp::max(0, 18 - i) + j) as usize]))
+                    .collect::<String>(), 
+                    fun: Box::new(move |v| (cmp::max(0, i as i32 - 18) as usize + v, cmp::max(0, 18 - i as i32) as usize + v))
+                }).collect::<Vec<Right>>();
+            let mut diagdown = (0..37)
+                .map(|i| Right { data: (0..19 - (19 - (i as i32 + 1)).abs())
+                    .map(|j| sq_to_char(
+                        &self.state[(cmp::max(0, i - 18) + j) as usize][(cmp::min(18, i) - j) as usize]))
+                    .collect::<String>(),
+                    fun: Box::new(move |v| (cmp::max(0, i as i32 - 18) as usize + v, cmp::min(18, i as i32) as usize - v))
+                }).collect::<Vec<Right>>();
+            t.append(&mut vert);
+            t.append(&mut hor);
+            t.append(&mut diagup);
+            t.append(&mut diagdown);
+        }
+
+        let mut pos = Vec::new();
+        for right in t {
+            for &(ref pattern, ref vec) in &p {
+                if let Some(offset) = right.data.find(pattern) {
+                    for i in vec {
+                        println!("{} => {} ({}, {:?})", pattern, right.data, i + offset, (right.fun)(i + offset));
+                        pos.push((right.fun)(i + offset));
+                    }
+                }
+            }
+        }
+        pos
+    }
+
     pub fn check_patterns(&self, color: &Square) -> usize {
         let sq_to_char = |sq: &Square| match *sq {
             Square::Black => 'B', Square::White => 'W', Square::Empty => '-'
         };
-        let p = vec![("yxxxx-", 0), ("-xxxxy", 1), ("-xxx-", 2),
+        let p = vec![("yxxxx-", 0), ("-xxxxy", 1), ("x-xxx-", 2),
         ("y-xxx--", 3), ("--xxx-y", 4), ("-xxxx-", 5), ("-x-xx-", 6),
         ("-xx-", 7), ("-yyx", 8), ("xyy-", 9)].iter()
             .map(|&(s, score)|
@@ -216,14 +286,14 @@ impl Board {
                         .map(|j| sq_to_char(&self.state[j][i]))
                         .collect::<String>())
                    .collect::<Vec<String>>();
-            let mut diagup = (0..19 * 2)
+            let mut diagup = (0..38)
                    .map(|i: i32| (0..19)
                         .filter(|j: &i32| (i - 19) + j < 19 && (i - 19) + j >= 0)
                         .map(|j: i32| sq_to_char(
                             &self.state[((i - 19) + j) as usize][j as usize]))
                         .collect::<String>())
                    .collect::<Vec<String>>();
-            let mut diagdown = (0..19 * 2)
+            let mut diagdown = (0..38)
                    .map(|i: i32| (0..19)
                         .filter(|j: &i32| (i - j) < 19 && (i - j) >= 0)
                         .map(|j: i32| sq_to_char(

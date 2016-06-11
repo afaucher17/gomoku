@@ -18,12 +18,12 @@ fn main() {
     "________B___W______\n",
     "_______W___W_______\n",
     "______W____________\n",
-    "_____W___W_________\n",
+    "_____W___W____B____\n",
     "_________W____B____\n",
     "_________W____B____\n",
     "__WWWW________B____\n",
     "______________W____\n",
     "______________W____\n"));
-    println!("{}\n{}", board, board.check_patterns(&board::Square::Black));
-    println!("{}\n{}", board, board.check_patterns(&board::Square::White));
+    println!("{}{:?}", board, board.check_threats(&board::Square::Black));
+    println!("{}{:?}", board, board.check_threats(&board::Square::White));
 }
