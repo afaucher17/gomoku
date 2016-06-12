@@ -202,7 +202,7 @@ impl Board {
         ("-yyyy", vec![0]), ("y-yyy", vec![1]), ("yy-yy", vec![2]),
         ("yyy-y", vec![3]), ("yyyy-", vec![4]), ("--yyy--", vec![0, 4]),
         ("x-yyy--", vec![4, 5, 1]), ("--yyy-x", vec![1, 0, 4]),
-        ("-y-yy-", vec![0, 2, 5]), ("-yy-y-", vec![0, 4, 5])].iter().map(|&(s, ref v)|
+        ("-y-yy-", vec![2, 5, 0]), ("-yy-y-", vec![3, 0, 5])].iter().map(|&(s, ref v)|
                  (s.replace("x", match *color {
                      Square::Black => "B", Square::White => "W", _ => " "
                  })
@@ -252,7 +252,6 @@ impl Board {
             for &(ref pattern, ref vec) in &p {
                 if let Some(offset) = right.data.find(pattern) {
                     for i in vec {
-                        println!("{} => {} ({}, {:?})", pattern, right.data, i + offset, (right.fun)(i + offset));
                         pos.push((right.fun)(i + offset));
                     }
                 }
@@ -385,8 +384,6 @@ impl Board {
             && (0..19).contains(x + 1) && (0..19).contains(y - 1) {
             updated.push(((x + 1) as usize, (y - 1) as usize))
         }
-        updated.sort_by(|a, b| a.cmp(&b));
-        updated.dedup();
         updated
     }
 }
