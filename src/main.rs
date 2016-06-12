@@ -26,4 +26,13 @@ fn main() {
     "______________W____\n"));
     println!("{}\n{}", board, board.check_patterns(&board::Square::Black));
     println!("{}\n{}", board, board.check_patterns(&board::Square::White));
+
+    let mut plays: Vec<(usize, usize)> = vec![];
+    for i in 0..400000 {
+        board.check_patterns(&board::Square::Black);
+        board.check_free_threes(3, 10, &board::Square::Black);
+        board.check_aligned(3, 10, &board::Square::Black);
+        board.check_capture(&board::Square::Black, (3, 10));
+        //board.update_playables(3, 10, &plays);
+    }
 }
