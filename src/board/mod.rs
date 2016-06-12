@@ -106,7 +106,7 @@ impl Board {
                                .filter(|&square| square == color).count())
     }
 
-    fn check_capture(&self, color: &Square, pos: (usize, usize)) -> Board {
+    pub fn check_capture(&self, color: &Square, pos: (usize, usize)) -> Board {
         let (x, y) = pos;
         let mut board = self.clone();
         {
@@ -238,7 +238,6 @@ impl Board {
         t.iter().fold(0, |acc, s| p.iter()
                       .fold(0, |acc2, &(ref pattern, score)|
                             if s.find(pattern).is_some() {
-                                println!("{} => {}", pattern, s);
                                 acc2 + score
                             } else {
                                 acc2
