@@ -7,10 +7,10 @@ struct Decision
     chose_move: (usize, usize)
 }
 
-pub fn minimax(board: board::Board, depth: usize, alpha: i32, beta: i32, maximizingPlayer: bool, prev_play: (usize, usize), evaluated: board::Square) -> usize 
+pub fn minimax(board: board::Board, depth: usize, alpha: i32, beta: i32, maximizingPlayer: bool, prev_play: (usize, usize), player: board::Square) -> usize 
 {
     let current_player = Square::Empty; //TODO
-    if depth == 0 || check_full_board(board)
+    if depth == 0 || board.check_full_board()
         || board.check_aligned(prev_play.0, prev_play.1, &current_player)
         || board.b_capture >= 10
         || board.w_capture >= 10 {

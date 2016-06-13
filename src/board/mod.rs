@@ -394,4 +394,8 @@ impl Board {
         plays.dedup();
         plays
     }
+
+    pub fn check_full_board(&self) -> bool {
+        !self.state.iter().any(|e| e.iter().any(|i| *i == Square::Empty))
+    }
 }
