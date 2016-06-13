@@ -67,6 +67,7 @@ impl Board {
 
     pub fn play_at(&self, x: usize, y: usize, color: &Square) -> Option<Board> {
         let mut clone = self.clone();
+        println!("{} {}", x, y);
         if !(0..19).contains(x) || !(0..19).contains(y)
             || clone.state[x][y] != Square::Empty {
             None
@@ -127,5 +128,9 @@ impl Board {
         plays.sort_by(|a, b| a.cmp(&b));
         plays.dedup();
         plays
+    }
+
+    pub fn evaluation(&self, color: &Square) -> i32 {
+        self.check_patterns(color)
     }
 }

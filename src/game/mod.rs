@@ -1,5 +1,7 @@
 use board::{Board, Square};
+use minimax::minimax;
 use std::io;
+use std::i32;
 
 pub fn get_input() -> (usize, usize) {
     let mut parsed: Vec<Result<usize, _>>;
@@ -15,16 +17,23 @@ pub fn get_input() -> (usize, usize) {
     (parsed[0].clone().unwrap() - 1, parsed[1].clone().unwrap() - 1)
 }
 
-pub fn game_loop(board: Board)
+pub fn game_loop(start: Board)
 {
-    let mut player = Square::White;
-    let mut new_board = board;
+    let mut player = Square::Black;
+    let mut board = start;
     loop {
-        let input: (usize, usize) = get_input();
-        new_board = match new_board.play_at(input.0, input.1, &player) {
-            Some(a_board) => { player = player.opposite(); a_board },
-            None => { println!("illegal move, please try again"); new_board },
+        println!("{}", board);
+        let input: (usize, usize) = if player == Square::Black {
+            get_input()
+        }
+        else {
+            minimax(&board, 4, i32::MIN, i32::MAX, true,
+            (0, 0), &Square::White).pos
         };
-        println!("{}", new_board);
+        board = match board.play_at(input.0, input.1, &player) {
+            Some(a_board) => { player = player.opposite(); a_board },
+            None => { println!("illegal move, please try again"); board.clone() },
+        };
+        println!("{}", board);
     }
 }
