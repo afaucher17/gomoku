@@ -92,23 +92,15 @@ impl Board
                 + self.rec_explo(color, x, y, -1, 1, 0)) > 4
     }
 
-    pub fn check_threats(&self, color: &Square) -> Vec<(usize, usize)> {
+    pub fn check_threats(&self) -> Vec<(usize, usize)> {
         let sq_to_char = |sq: &Square| match *sq {
-            Square::Black => 'B', Square::White => 'W', Square::Empty => '-'
+            Square::Black | Square::White => 'x', Square::Empty => '-'
         };
 
         let p = vec![("xxxx-", vec![4]), ("xxx-x", vec![3]),
         ("xx-xx", vec![2]), ("x-xxx", vec![1]), ("-xxxx", vec![0]),
-        ("-yyyy", vec![0]), ("y-yyy", vec![1]), ("yy-yy", vec![2]),
-        ("yyy-y", vec![3]), ("yyyy-", vec![4]), ("--yyy--", vec![0, 4]),
-        ("x-yyy--", vec![4, 5, 1]), ("--yyy-x", vec![1, 0, 4]),
-        ("-y-yy-", vec![2, 5, 0]), ("-yy-y-", vec![3, 0, 5])].iter().map(|&(s, ref v)|
-                 (s.replace("x", match *color {
-                     Square::Black => "B", Square::White => "W", _ => " "
-                 })
-                 .replace("y", match color.opposite() {
-                     Square::Black => "B", Square::White => "W", _ => " "
-                 }), v.clone())).collect::<Vec<_>>();
+        ("--xxx", vec![1]), ("xxx--", vec![3]),
+        ("x-xx-", vec![2, 5]), ("-xx-x", vec![3, 0])];
 
         struct Right {
             data: String,
@@ -160,57 +152,65 @@ impl Board
         pos
     }
 
-    pub fn check_patterns(&self, color: &Square) -> usize {
+    pub fn check_patterns(&self, color: &Square) -> i32 {
         let sq_to_char = |sq: &Square| match *sq {
             Square::Black => 'B', Square::White => 'W', Square::Empty => '-'
         };
-        let p = vec![("yxxxx-", 0), ("-xxxxy", 1), ("x-xxx-", 2),
-        ("y-xxx--", 3), ("--xxx-y", 4), ("-xxxx-", 5), ("-x-xx-", 6),
-        ("-xx-", 7), ("-yyx", 8), ("xyy-", 9)].iter()
-            .map(|&(s, score)|
-                 (s.replace("x", match *color {
-                     Square::Black => "B", Square::White => "W", _ => " " 
-                 })
-                 .replace("y", match color.opposite() {
-                     Square::Black => "B", Square::White => "W", _ => " "
-                 }), score)).collect::<Vec<_>>();
+
+        let patterns = vec![("xxxxx", 512), ("xxxx-", 32), ("-xxxx", 32),
+        ("xxx-x", 32), ("x-xxx", 32), ("xx-xx", 32), ("xxx--", 8),
+        ("--xxx", 8), ("-xxx-", 4), ("-x-xx", 2), ("xx-x-", 2),
+        ("--xx-", 1), ("-xx--", 1)];
+        let player_patterns = patterns.iter().map(|&(s, score)|
+                                (s.replace("x", match *color {
+                                    Square::Black => "B",
+                                    Square::White => "W",
+                                    _ => " ",
+                                }), score)).collect::<Vec<_>>();
+        let opponent_patterns = patterns.iter().map(|&(s, score)|
+                                (s.replace("x", match color.opposite() {
+                                    Square::Black => "B",
+                                    Square::White => "W",
+                                    _ => " ",
+                                }), -score)).collect::<Vec<_>>();
         let mut t = Vec::new();
         {
             let mut vert = (0..19).map(|i| (0..19)
                                .map(|j| sq_to_char(&self.state[i][j]))
                                .collect::<String>())
-                   .collect::<Vec<String>>();
+                   .collect::<Vec<_>>();
             let mut hor = (0..19)
                    .map(|i| (0..19)
                         .map(|j| sq_to_char(&self.state[j][i]))
                         .collect::<String>())
-                   .collect::<Vec<String>>();
+                   .collect::<Vec<_>>();
             let mut diagup = (0..38)
                    .map(|i: i32| (0..19)
                         .filter(|j: &i32| (i - 19) + j < 19 && (i - 19) + j >= 0)
                         .map(|j: i32| sq_to_char(
                             &self.state[((i - 19) + j) as usize][j as usize]))
                         .collect::<String>())
-                   .collect::<Vec<String>>();
+                   .collect::<Vec<_>>();
             let mut diagdown = (0..38)
                    .map(|i: i32| (0..19)
                         .filter(|j: &i32| (i - j) < 19 && (i - j) >= 0)
                         .map(|j: i32| sq_to_char(
                                 &self.state[(i - j) as usize][j as usize]))
                         .collect::<String>())
-                   .collect::<Vec<String>>();
+                   .collect::<Vec<_>>();
             t.append(&mut vert);
             t.append(&mut hor);
             t.append(&mut diagup);
             t.append(&mut diagdown);
         }
-        t.iter().fold(0, |acc, s| p.iter()
-                      .fold(0, |acc2, &(ref pattern, score)|
+        t.iter().fold(0, |acc, s| 
+                      acc + player_patterns.iter().chain(opponent_patterns.iter())
+                      .fold(0, |acc, &(ref pattern, score)|
                             if s.find(pattern).is_some() {
-                                acc2 + score
+                                acc + score
                             } else {
-                                acc2
-                            }) + acc)
+                                acc
+                            }))
     }
 
     pub fn check_free_threes(&self, x: i32, y: i32, color: &Square) -> bool {
