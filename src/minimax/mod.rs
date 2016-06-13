@@ -7,9 +7,9 @@ struct Decision
     chose_move: (usize, usize)
 }
 
-pub fn minimax(board: board::Board, depth: usize, alpha: i32, beta: i32, maximizingPlayer: bool, prev_play: (usize, usize), player: board::Square) -> usize 
+pub fn minimax(board: board::Board, depth: usize, alpha: i32, beta: i32, maximizingPlayer: bool, prev_play: (usize, usize), prev_color: board::Square, player: board::Square) -> usize 
 {
-    let current_player = Square::Empty; //TODO
+    let current_color = prev_color.opposite();
     if depth == 0 || board.check_full_board()
         || board.check_aligned(prev_play.0, prev_play.1, &current_player)
         || board.b_capture >= 10
@@ -22,7 +22,7 @@ pub fn minimax(board: board::Board, depth: usize, alpha: i32, beta: i32, maximiz
         for play in plays {
             let child = board.play_at(play.0, play.1, &current_player);
             if child.is_some() {
-                v = cmp::max(v, minimax(child.unwrap(), depth - 1, alpha, beta, false, play));
+                v = cmp::max(v, minimax(child.unwrap(), depth - 1, alpha, beta, false, play, current_color, player));
                 let alpha = cmp::max(alpha, v);
                 if beta <= alpha {
                     break ; // beta cut-off
@@ -36,7 +36,7 @@ pub fn minimax(board: board::Board, depth: usize, alpha: i32, beta: i32, maximiz
         for play in plays {
             let child = board.play_at(play.0, play.1, &current_player);
             if child.is_some() {
-                v = cmp::min(v, minimax(child.unwrap(), depth - 1, alpha, beta, true, play));
+                v = cmp::min(v, minimax(child.unwrap(), depth - 1, alpha, beta, true, play, current_color, player));
                 let beta = cmp::min(beta, v);
                 if beta <= alpha {
                     break ; // alpha cut-off
