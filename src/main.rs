@@ -24,6 +24,7 @@ fn main() {
     "__WWWW________B____\n",
     "______________W____\n",
     "______________W____\n"));
-    println!("{}\n{:?}", board, board.check_threats(&board::Square::Black));
-    println!("{}\n{:?}", board, board.check_threats(&board::Square::White));
+    for _ in 0..1000 {
+        board.check_threats(&board::Square::Black);
+    }
 }
