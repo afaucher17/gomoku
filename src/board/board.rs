@@ -46,11 +46,11 @@ impl<'a> From<&'a str> for Board
     fn from(s: &'a str) -> Self {
         Board { state: s.split('\n').collect::<Vec<&'a str>>()
             .iter()
-            .map(|s| s.chars().map(|c| match c {
-                                'B' => Square::Black,
-                                'W' => Square::White,
-                                _ => Square::Empty
-                            }).collect::<Vec<Square>>())
+                .map(|s| s.chars().map(|c| match c {
+                    'B' => Square::Black,
+                    'W' => Square::White,
+                    _ => Square::Empty
+                }).collect::<Vec<Square>>())
             .collect::<Vec<Vec<Square>>>(),
             b_capture: 0, w_capture: 0 }
     }
@@ -65,19 +65,23 @@ impl Board {
         }
     }
 
-    pub fn play_at(&self, x: usize, y: usize, color: &Square) -> Option<Board> {
-        let mut clone = self.clone();
-        println!("{} {}", x, y);
-        if !(0..19).contains(x) || !(0..19).contains(y)
-            || clone.state[x][y] != Square::Empty {
-            None
-        }
-        else {
-            clone.state[x][y] = color.clone();
-            if !clone.check_free_threes(x as i32, y as i32, color) {
-                Some(clone.check_capture(color, (x, y)))
-            }
-            else { None }
+    pub fn play_at(&self, pos: Option<(usize, usize)>, color: &Square) -> Option<Board> {
+        match pos {
+            Some((x, y)) => {
+                let mut clone = self.clone();
+                if !(0..19).contains(x) || !(0..19).contains(y)
+                    || clone.state[x][y] != Square::Empty {
+                        None
+                    }
+                else {
+                    clone.state[x][y] = color.clone();
+                    if !clone.check_free_threes(x as i32, y as i32, color) {
+                        Some(clone.check_capture(color, (x, y)))
+                    }
+                    else { None }
+                }
+            },
+            None => None,
         }
     }
 
@@ -85,36 +89,36 @@ impl Board {
         let mut surr: Vec<(usize, usize)> = Vec::new();
         if (0..19).contains(x + 1)
             && self.state[(x + 1) as usize][y as usize] == Square::Empty {
-            surr.push(((x + 1) as usize, y as usize))
-        }
+                surr.push(((x + 1) as usize, y as usize))
+            }
         if (0..19).contains(x + 1) && (0..19).contains(y + 1)
             && self.state[(x + 1) as usize][(y + 1) as usize] == Square::Empty {
-            surr.push(((x + 1) as usize, (y + 1) as usize))
-        }
+                surr.push(((x + 1) as usize, (y + 1) as usize))
+            }
         if (0..19).contains(y + 1)
             && self.state[x as usize][(y + 1) as usize] == Square::Empty {
-            surr.push((x as usize, (y + 1) as usize))
-        }
+                surr.push((x as usize, (y + 1) as usize))
+            }
         if (0..19).contains(x - 1) && (0..19).contains(y + 1)
             && self.state[(x - 1) as usize][(y + 1) as usize] == Square::Empty {
-            surr.push(((x - 1) as usize, (y + 1) as usize))
-        }
+                surr.push(((x - 1) as usize, (y + 1) as usize))
+            }
         if (0..19).contains(x - 1)
             && self.state[(x - 1) as usize][y as usize] == Square::Empty {
-            surr.push(((x - 1) as usize, y as usize))
-        }
+                surr.push(((x - 1) as usize, y as usize))
+            }
         if (0..19).contains(x - 1) && (0..19).contains(y - 1)
             && self.state[(x - 1) as usize][(y - 1) as usize] == Square::Empty {
-            surr.push(((x - 1) as usize, (y - 1) as usize))
-        }
+                surr.push(((x - 1) as usize, (y - 1) as usize))
+            }
         if (0..19).contains(y - 1)
             && self.state[x as usize][(y - 1) as usize] == Square::Empty {
-            surr.push((x as usize, (y - 1) as usize))
-        }
+                surr.push((x as usize, (y - 1) as usize))
+            }
         if (0..19).contains(x + 1) && (0..19).contains(y - 1)
             && self.state[(x + 1) as usize][(y - 1) as usize] == Square::Empty {
-            surr.push(((x + 1) as usize, (y - 1) as usize))
-        }
+                surr.push(((x + 1) as usize, (y - 1) as usize))
+            }
         surr
     }
 
