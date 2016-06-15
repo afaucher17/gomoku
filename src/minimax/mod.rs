@@ -28,7 +28,8 @@ pub fn minimax(board: &Board,
                mut beta: i32,
                maximizing_player: bool,
                prev_play: Option<(usize, usize)>,
-               player: &Square)
+               player: &Square,
+               mut killer_moves: Vec<Vec<(usize, usize)>>)
     -> Decision
 {
     let current_color = match maximizing_player { true => player.clone(), false => player.opposite() };
@@ -43,7 +44,9 @@ pub fn minimax(board: &Board,
             pos: prev_play
         };
     }
-    let plays = board.get_plays(&current_color);
+    let mut plays: Vec<(usize, usize)> = Vec::new();
+    if !killer_moves[depth].is_empty() { plays.append(&mut killer_moves[depth]); }
+    plays.append(&mut board.get_plays(&current_color));
     if maximizing_player {
         let mut v = Decision { score: i32::MIN, pos: None };
         //println!(" (DEPTH = {}, POS = {:?}, (MAXIMAZING):", depth, prev_play);
@@ -57,6 +60,7 @@ pub fn minimax(board: &Board,
                 alpha = cmp::max(alpha, v.score);
                 if alpha >= beta {
                     //print!(" beta cutoff (beta {} <= {})", beta, v.score);
+                    killer_moves[depth].push(v.pos.unwrap());
                     break ; // beta cut-off
                 }
             }
@@ -81,6 +85,7 @@ pub fn minimax(board: &Board,
                 beta = cmp::min(beta, v.score);
                 if beta <= alpha {
                     //print!(" alpha cutoff ({} <= alpha {})", v.score, alpha);
+                    killer_moves[depth].push(v.pos.unwrap());
                     break ; // alpha cut-off
                 }
             }
