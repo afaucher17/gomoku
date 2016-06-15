@@ -101,7 +101,7 @@ impl Board
         let p = vec![("xxxx-", vec![4]), ("xxx-x", vec![3]),
         ("xx-xx", vec![2]), ("x-xxx", vec![1]), ("-xxxx", vec![0]),
         ("--xxx", vec![1]), ("xxx--", vec![3]),
-        ("x-xx-", vec![2, 5]), ("-xx-x", vec![3, 0])];
+        ("x-xx-", vec![1, 4]), ("-xx-x", vec![3, 0])];
 
         struct Right {
             data: String,

@@ -43,7 +43,7 @@ pub fn minimax(board: &Board,
             pos: prev_play
         };
     }
-    let plays = board.get_plays();
+    let plays = board.get_plays(&current_color);
     if maximizing_player {
         let mut v = Decision { score: alpha, pos: None };
         for pos in plays {
@@ -52,7 +52,7 @@ pub fn minimax(board: &Board,
                 let score = v.score;
                 v = cmp::max(v, minimax(&child.unwrap(), depth - 1, score, beta, false, Some(pos), player));
                 if beta <= v.score {
-                    println!("beta cutoff");
+                    println!("beta cutoff\n{:?}", board.play_at(v.pos, &current_color));
                     break ; // beta cut-off
                 }
             }
@@ -70,7 +70,7 @@ pub fn minimax(board: &Board,
                 let score = v.score;
                 v = cmp::min(v, minimax(&child.unwrap(), depth - 1, alpha, score, true, Some(pos), player));
                 if v.score <= alpha {
-                    println!("alpha cutoff");
+                    println!("alpha cutoff\n{:?}", board.play_at(v.pos, &current_color));
                     break ; // alpha cut-off
                 }
             }
