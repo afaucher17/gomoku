@@ -3,6 +3,8 @@ extern crate gomoku;
 
 use gomoku::board::{Board, Square};
 use gomoku::game;
+use gomoku::minimax::minimax;
+use std::i32;
 
 fn main() {
     let board = Board::from(concat!(
