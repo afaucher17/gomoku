@@ -231,7 +231,7 @@ impl Board
             .collect::<Vec<String>>();
         let mut t = vec![String::new(); 4];
         t[0] = (0..9).map(|i| i as i32 - 4)
-            .filter(|i| x + i < 19 && x + i >= 0)
+            .filter(|i| (x + i) < 19 && (x + i) >= 0)
             .map(|i| sq_to_char(&self.state[(x + i) as usize][y as usize]))
             .collect::<String>();
         t[1] = (0..9).map(|i| i as i32 - 4)
@@ -239,11 +239,11 @@ impl Board
             .map(|i| sq_to_char(&self.state[x as usize][(y + i) as usize]))
             .collect::<String>();
         t[2] = (0..9).map(|i| i as i32 - 4)
-            .filter(|i| x + i < 19 && x + i >= 0 && y + i < 19 && y - *i >= 0)
+            .filter(|i| x + i < 19 && x + i >= 0 && y + i < 19 && y + i >= 0)
             .map(|i| sq_to_char(&self.state[(x + i) as usize][(y + i) as usize]))
             .collect::<String>();
         t[3] = (0..9).map(|i| i as i32 - 4)
-            .filter(|i| x + i < 19 && x + i >= 0 && y - *i < 19 && y - *i >= 0)
+            .filter(|i| x + i < 19 && x + i >= 0 && y - i < 19 && y - i >= 0)
             .map(|i| sq_to_char(&self.state[(x + i) as usize][(y - i) as usize]))
             .collect::<String>();
         t.iter().filter(|s| s.find(&p[0]).is_some()
