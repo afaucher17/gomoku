@@ -45,7 +45,7 @@ pub fn minimax(board: &Board,
         };
     }
     let mut plays: Vec<(usize, usize)> = Vec::new();
-    if !killer_moves[depth].is_empty() { plays.append(&mut killer_moves[depth]); }
+    if !killer_moves[depth].is_empty() { plays.append(&mut killer_moves[depth].clone()); }
     plays.append(&mut board.get_plays(&current_color));
     if maximizing_player {
         let mut v = Decision { score: i32::MIN, pos: None };
@@ -54,12 +54,12 @@ pub fn minimax(board: &Board,
             let child = board.play_at(Some(pos), &current_color);
             if child.is_some() {
                 let score = v.score;
-                let decision = minimax(&child.unwrap(), depth - 1, alpha, beta, false, Some(pos), player);
+                let decision = minimax(&child.unwrap(), depth - 1, alpha, beta, false, Some(pos), player, killer_moves.clone());
                 //print!(" {},", decision.score);
                 v = cmp::max(v, decision);
                 alpha = cmp::max(alpha, v.score);
                 if alpha >= beta {
-                    if killer_moves[depth].len() < 2 { killer_moves[depth].push(v.pos.unwrap()); }
+                    if killer_moves[depth].len() == 2 { killer_moves[depth].remove(0); killer_moves[depth].push(v.pos.unwrap()); }
                     //print!(" beta cutoff (beta {} <= {})", beta, v.score);
                     break ; // beta cut-off
                 }
@@ -79,12 +79,12 @@ pub fn minimax(board: &Board,
             let child = board.play_at(Some(pos), &current_color);
             if child.is_some() {
                 let score = v.score;
-                let decision = minimax(&child.unwrap(), depth - 1, alpha, beta, true, Some(pos), player);
+                let decision = minimax(&child.unwrap(), depth - 1, alpha, beta, true, Some(pos), player, killer_moves.clone());
                 //print!("{},", decision.score);
                 v = cmp::min(v, decision);
                 beta = cmp::min(beta, v.score);
                 if beta <= alpha {
-                    if killer_moves[depth].len() < 2 { killer_moves[depth].push(v.pos.unwrap()); }
+                    if killer_moves[depth].len() == 2 { killer_moves[depth].remove(0); killer_moves[depth].push(v.pos.unwrap()); }
                     //print!(" alpha cutoff ({} <= alpha {})", v.score, alpha);
                     break ; // alpha cut-off
                 }

@@ -22,14 +22,14 @@ pub fn game_loop(start: Board)
     let depth = 4;
     let mut player = Square::Black;
     let mut board = start;
-    let mut killer_moves = vec![vec![]; depth + 1];
     loop {
         let input = if player == Square::Black {
             get_input()
         }
         else {
+            let mut killer_moves = vec![vec![]; depth + 1];
             minimax(&board, depth, i32::MIN, i32::MAX, true,
-            None, &Square::White, killer_moves.clone()).pos
+            None, &Square::White, killer_moves).pos
         };
         board = match board.play_at(input, &player) {
             Some(a_board) => { player = player.opposite(); a_board },
