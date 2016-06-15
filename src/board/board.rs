@@ -123,6 +123,7 @@ impl Board {
     }
 
     pub fn get_plays(&self) -> Vec<(usize, usize)> {
+
         let mut plays: Vec<(usize, usize)> = (0..19)
             .fold(vec![], |mut acc, i| {
                 acc.extend((0..19)

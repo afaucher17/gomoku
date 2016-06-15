@@ -26,31 +26,33 @@ pub fn minimax(board: &Board,
                depth: usize,
                alpha: i32,
                beta: i32,
-               maximizingPlayer: bool,
+               maximizing_player: bool,
                prev_play: Option<(usize, usize)>,
                player: &Square)
     -> Decision
 {
-    let current_color = match maximizingPlayer { true => player.clone(), false => player.opposite() };
+    let current_color = match maximizing_player { true => player.clone(), false => player.opposite() };
     if depth == 0 || board.check_full_board()
         || (prev_play.is_some() &&
             board.check_aligned(prev_play.unwrap(), &current_color))
         || board.b_capture >= 10
         || board.w_capture >= 10 {
+        let score = board.evaluation(&player);
         return Decision {
-            score: board.evaluation(&player),
+            score: score,
             pos: prev_play
         };
     }
     let plays = board.get_plays();
-    if maximizingPlayer {
-        let mut v = Decision { score: i32::MIN, pos: None };
+    if maximizing_player {
+        let mut v = Decision { score: alpha, pos: None };
         for pos in plays {
             let child = board.play_at(Some(pos), &current_color);
             if child.is_some() {
-                v = cmp::max(v, minimax(&child.unwrap(), depth - 1, alpha, beta, false, Some(pos), player));
-                let alpha = cmp::max(alpha, v.score);
-                if beta <= alpha {
+                let score = v.score;
+                v = cmp::max(v, minimax(&child.unwrap(), depth - 1, score, beta, false, Some(pos), player));
+                if beta <= v.score {
+                    println!("beta cutoff");
                     break ; // beta cut-off
                 }
             }
@@ -61,13 +63,14 @@ pub fn minimax(board: &Board,
         };
     }
     else {
-        let mut v = Decision { score: i32::MAX, pos: None };
+        let mut v = Decision { score: beta, pos: None };
         for pos in plays {
             let child = board.play_at(Some(pos), &current_color);
             if child.is_some() {
-                v = cmp::min(v, minimax(&child.unwrap(), depth - 1, alpha, beta, true, Some(pos), player));
-                let beta = cmp::min(beta, v.score);
-                if beta <= alpha {
+                let score = v.score;
+                v = cmp::min(v, minimax(&child.unwrap(), depth - 1, alpha, score, true, Some(pos), player));
+                if v.score <= alpha {
+                    println!("alpha cutoff");
                     break ; // alpha cut-off
                 }
             }
