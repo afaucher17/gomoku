@@ -55,7 +55,7 @@ pub fn minimax(board: &Board,
                 let score = v.score;
                 v = cmp::max(v, minimax(&child.unwrap(), depth - 1, score, beta, false, Some(pos), player, killer_moves.clone()));
                 if beta <= v.score {
-                    killer_moves[depth].push(v.pos.unwrap());
+                    if killer_moves[depth].len() < 2 { killer_moves[depth].push(v.pos.unwrap()); }
                     println!("beta cutoff\n{:?}", board.play_at(v.pos, &current_color));
                     break ; // beta cut-off
                 }
@@ -74,7 +74,7 @@ pub fn minimax(board: &Board,
                 let score = v.score;
                 v = cmp::min(v, minimax(&child.unwrap(), depth - 1, alpha, score, true, Some(pos), player, killer_moves.clone()));
                 if v.score <= alpha {
-                    killer_moves[depth].push(v.pos.unwrap());
+                    if killer_moves[depth].len() < 2 { killer_moves[depth].push(v.pos.unwrap()); }
                     println!("alpha cutoff\n{:?}", board.play_at(v.pos, &current_color));
                     break ; // alpha cut-off
                 }
