@@ -118,11 +118,11 @@ impl Board {
         surr
     }
 
-    pub fn get_plays(&self) -> Vec<(usize, usize)> {
+    pub fn get_plays(&self, color: &Square) -> Vec<(usize, usize)> {
         let mut plays: Vec<(usize, usize)> = (0..19)
             .fold(vec![], |mut acc, i| {
                 acc.extend((0..19)
-                           .filter(|j: &usize| self.state[i][*j] != Square::Empty)
+                           .filter(|j: &usize| self.state[i][*j] != Square::Empty && self.state[i][*j] == *color)
                            .fold(vec![], |mut acc2, j| { acc2.extend(self.get_surroundings(i as i32, j as i32).iter().cloned()); acc2 })
                            .iter().cloned()); acc });
         plays.sort_by(|a, b| a.cmp(&b));

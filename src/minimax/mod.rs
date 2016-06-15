@@ -41,7 +41,7 @@ pub fn minimax(board: &Board,
             pos: prev_play
         };
     }
-    let plays = board.get_plays();
+    let plays = board.get_plays(&current_color);
     if maximizingPlayer {
         let mut v = Decision { score: i32::MIN, pos: (0, 0) };
         for (x, y) in plays {
