@@ -81,7 +81,8 @@ impl Board
         }
     }
 
-    pub fn check_aligned(&self, x: i32, y: i32, color: &Square) -> bool {
+    pub fn check_aligned(&self, pos: (usize, usize), color: &Square) -> bool {
+        let (x, y) = (pos.0 as i32, pos.1 as i32);
         (self.rec_explo(color, x, y, 1, 1, 1)
          + self.rec_explo(color, x, y, -1, -1, 0)) > 4
             || (self.rec_explo(color, x, y, 1, 0, 1)

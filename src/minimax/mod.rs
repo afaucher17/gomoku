@@ -9,7 +9,7 @@ use std::cmp::PartialEq;
 pub struct Decision
 {
     score: i32,
-    pub pos: (usize, usize)
+    pub pos: Option<(usize, usize)>
 }
 
 impl Ord for Decision
@@ -27,13 +27,14 @@ pub fn minimax(board: &Board,
                alpha: i32,
                beta: i32,
                maximizingPlayer: bool,
-               prev_play: (usize, usize),
+               prev_play: Option<(usize, usize)>,
                player: &Square)
     -> Decision
 {
     let current_color = match maximizingPlayer { true => player.clone(), false => player.opposite() };
     if depth == 0 || board.check_full_board()
-        || board.check_aligned(prev_play.0 as i32, prev_play.1 as i32, &current_color)
+        || (prev_play.is_some() &&
+            board.check_aligned(prev_play.unwrap(), &current_color))
         || board.b_capture >= 10
         || board.w_capture >= 10 {
         return Decision {
@@ -43,31 +44,37 @@ pub fn minimax(board: &Board,
     }
     let plays = board.get_plays();
     if maximizingPlayer {
-        let mut v = Decision { score: i32::MIN, pos: (0, 0) };
-        for (x, y) in plays {
-            let child = board.play_at(x, y, &current_color);
+        let mut v = Decision { score: i32::MIN, pos: None };
+        for pos in plays {
+            let child = board.play_at(Some(pos), &current_color);
             if child.is_some() {
-                v = cmp::max(v, minimax(&child.unwrap(), depth - 1, alpha, beta, false, (x, y), player));
+                v = cmp::max(v, minimax(&child.unwrap(), depth - 1, alpha, beta, false, Some(pos), player));
                 let alpha = cmp::max(alpha, v.score);
                 if beta <= alpha {
                     break ; // beta cut-off
                 }
             }
         }
-        return v;
+        return Decision {
+            score: v.score,
+            pos: if prev_play.is_none() { v.pos } else { prev_play },
+        };
     }
     else {
-        let mut v = Decision { score: i32::MAX, pos: (0, 0) };
-        for (x, y) in plays {
-            let child = board.play_at(x, y, &current_color);
+        let mut v = Decision { score: i32::MAX, pos: None };
+        for pos in plays {
+            let child = board.play_at(Some(pos), &current_color);
             if child.is_some() {
-                v = cmp::min(v, minimax(&child.unwrap(), depth - 1, alpha, beta, true, (x, y), player));
+                v = cmp::min(v, minimax(&child.unwrap(), depth - 1, alpha, beta, true, Some(pos), player));
                 let beta = cmp::min(beta, v.score);
                 if beta <= alpha {
                     break ; // alpha cut-off
                 }
             }
         }
-        return v;
+        return Decision {
+            score: v.score,
+            pos: if prev_play.is_none() { v.pos } else { prev_play },
+        };
     }
 }
