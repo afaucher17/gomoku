@@ -25,12 +25,12 @@ fn main() {
     "___________________\n",
     "___________________\n",
     "___________________"));
-    for play in board.get_plays(&Square::Black) {
+/*    for play in board.get_plays(&Square::Black) {
         println!("({}, {})", play.0 + 1, play.1 + 1);
     }
     println!("-----------------------------------------------------------");
     for play in board.get_plays(&Square::White) {
         println!("<{}, {}>", play.0 + 1, play.1 + 1);
-    }
-//    game::game_loop(board);
+    }*/
+    game::game_loop(Board::new());
 }
