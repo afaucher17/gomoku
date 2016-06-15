@@ -5,7 +5,7 @@ use std::cmp::Ordering;
 use std::i32;
 use std::cmp::PartialEq;
 
-#[derive(PartialEq, Eq, PartialOrd)]
+#[derive(PartialEq, Eq, PartialOrd, Debug)]
 pub struct Decision
 {
     score: i32,
@@ -24,8 +24,8 @@ impl Ord for Decision
 
 pub fn minimax(board: &Board,
                depth: usize,
-               alpha: i32,
-               beta: i32,
+               mut alpha: i32,
+               mut beta: i32,
                maximizing_player: bool,
                prev_play: Option<(usize, usize)>,
                player: &Square)
@@ -45,39 +45,51 @@ pub fn minimax(board: &Board,
     }
     let plays = board.get_plays(&current_color);
     if maximizing_player {
-        let mut v = Decision { score: alpha, pos: None };
+        let mut v = Decision { score: i32::MIN, pos: None };
+        //println!(" (DEPTH = {}, POS = {:?}, (MAXIMAZING):", depth, prev_play);
         for pos in plays {
             let child = board.play_at(Some(pos), &current_color);
             if child.is_some() {
                 let score = v.score;
-                v = cmp::max(v, minimax(&child.unwrap(), depth - 1, score, beta, false, Some(pos), player));
-                if beta <= v.score {
-                    println!("beta cutoff\n{:?}", board.play_at(v.pos, &current_color));
+                let decision = minimax(&child.unwrap(), depth - 1, alpha, beta, false, Some(pos), player);
+                //print!(" {},", decision.score);
+                v = cmp::max(v, decision);
+                alpha = cmp::max(alpha, v.score);
+                if alpha >= beta {
+                    //print!(" beta cutoff (beta {} <= {})", beta, v.score);
                     break ; // beta cut-off
                 }
             }
         }
-        return Decision {
+        let decision = Decision { 
             score: v.score,
             pos: if prev_play.is_none() { v.pos } else { prev_play },
         };
+        //println!(") => ({}, {:?})", v.score, decision.pos.unwrap());
+        return decision;
     }
     else {
-        let mut v = Decision { score: beta, pos: None };
+        let mut v = Decision { score: i32::MAX, pos: None };
+        //println!(" (DEPTH = {}, POS = {:?}, (MINIMIZING): ", depth, prev_play);
         for pos in plays {
             let child = board.play_at(Some(pos), &current_color);
             if child.is_some() {
                 let score = v.score;
-                v = cmp::min(v, minimax(&child.unwrap(), depth - 1, alpha, score, true, Some(pos), player));
-                if v.score <= alpha {
-                    println!("alpha cutoff\n{:?}", board.play_at(v.pos, &current_color));
+                let decision = minimax(&child.unwrap(), depth - 1, alpha, beta, true, Some(pos), player);
+                //print!("{},", decision.score);
+                v = cmp::min(v, decision);
+                beta = cmp::min(beta, v.score);
+                if beta <= alpha {
+                    //print!(" alpha cutoff ({} <= alpha {})", v.score, alpha);
                     break ; // alpha cut-off
                 }
             }
         }
-        return Decision {
+        let decision = Decision {
             score: v.score,
             pos: if prev_play.is_none() { v.pos } else { prev_play },
         };
+        //println!(") => ({}, {:?})", v.score, decision.pos.unwrap());
+        return decision;
     }
 }

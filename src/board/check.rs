@@ -95,13 +95,19 @@ impl Board
 
     pub fn check_threats(&self) -> Vec<(usize, usize)> {
         let sq_to_char = |sq: &Square| match *sq {
-            Square::Black | Square::White => 'x', Square::Empty => '-'
+            Square::Black => 'B',
+            Square::White => 'W', Square::Empty => '-'
         };
 
-        let p = vec![("xxxx-", vec![4]), ("xxx-x", vec![3]),
-        ("xx-xx", vec![2]), ("x-xxx", vec![1]), ("-xxxx", vec![0]),
-        ("--xxx", vec![1]), ("xxx--", vec![3]),
-        ("x-xx-", vec![1, 4]), ("-xx-x", vec![3, 0])];
+        let p = vec![("WWWW-", vec![4]), ("BBBB-", vec![4]),
+        ("WWWW-W", vec![3]), ("BBBB-B", vec![3]),
+        ("WW-WW", vec![2]), ("BB-BB", vec![2]),
+        ("W-WWW", vec![1]), ("BB-BB", vec![1]),
+        ("-WWWW", vec![0]), ("-BBBB", vec![0]),
+        ("--WWW", vec![1]), ("--BBB", vec![1]),
+        ("WWW--", vec![3]), ("BBB--", vec![3]),
+        ("W-WW-", vec![1, 4]), ("B-BB-", vec![1, 4]),
+        ("-WW-W", vec![3, 0]), ("-BB-B", vec![3, 0])];
 
         struct Right {
             data: String,
@@ -158,8 +164,8 @@ impl Board
             Square::Black => 'B', Square::White => 'W', Square::Empty => '-'
         };
 
-        let patterns = vec![("xxxxx", 512), ("xxxx-", 32), ("-xxxx", 32),
-        ("xxx-x", 32), ("x-xxx", 32), ("xx-xx", 32), ("xxx--", 8),
+        let patterns = vec![("xxxxx", 512), ("xxxx-", 64), ("-xxxx", 64),
+        ("xxx-x", 64), ("x-xxx", 64), ("xx-xx", 64), ("xxx--", 8),
         ("--xxx", 8), ("-xxx-", 4), ("-x-xx", 2), ("xx-x-", 2),
         ("--xx-", 1), ("-xx--", 1)];
         let player_patterns = patterns.iter().map(|&(s, score)|
