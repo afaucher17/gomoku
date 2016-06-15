@@ -1,11 +1,11 @@
 #[macro_use]
 extern crate gomoku;
 
-use gomoku::board;
+use gomoku::board::{Board, Square};
 use gomoku::game;
 
 fn main() {
-    let board = board::Board::from(concat!(
+    let board = Board::from(concat!(
     "___________________\n",
     "___________________\n",
     "___________________\n",
@@ -25,11 +25,12 @@ fn main() {
     "___________________\n",
     "___________________\n",
     "___________________"));
-    for play in board.get_plays(&board::Square::Black) {
-        println!("({}, {})", play.0, play.1);
+    for play in board.get_plays(&Square::Black) {
+        println!("({}, {})", play.0 + 1, play.1 + 1);
     }
-    for play in board.get_plays(&board::Square::White) {
-        println!("<{}, {}>", play.0, play.1);
+    println!("-----------------------------------------------------------");
+    for play in board.get_plays(&Square::White) {
+        println!("<{}, {}>", play.0 + 1, play.1 + 1);
     }
 //    game::game_loop(board);
 }

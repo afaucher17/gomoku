@@ -1,6 +1,10 @@
+extern crate itertools;
+
 use std::fmt;
 
 use board::square::Square;
+
+use self::itertools::Itertools;
 
 #[derive(Clone)]
 #[derive(PartialEq)]
@@ -85,7 +89,7 @@ impl Board {
         }
     }
 
-    fn get_surroundings(&self, x: i32, y: i32) -> Vec<(usize, usize)> {
+    fn get_square_surroundings(&self, x: i32, y: i32) -> Vec<(usize, usize)> {
         let mut surr: Vec<(usize, usize)> = Vec::new();
         if (0..19).contains(x + 1)
             && self.state[(x + 1) as usize][y as usize] == Square::Empty {
@@ -122,16 +126,27 @@ impl Board {
         surr
     }
 
-    pub fn get_plays(&self, color: &Square) -> Vec<(usize, usize)> {
-        let mut plays: Vec<(usize, usize)> = (0..19)
-            .fold(vec![], |mut acc, i| {
+    fn get_surroundings(&self, color: &Square) -> Vec<(usize, usize)>
+    {
+        (0..19).fold(vec![], |mut acc, i| {
                 acc.extend((0..19)
                            .filter(|j: &usize| self.state[i][*j] != Square::Empty && self.state[i][*j] == *color)
-                           .fold(vec![], |mut acc2, j| { acc2.extend(self.get_surroundings(i as i32, j as i32).iter().cloned()); acc2 })
-                           .iter().cloned()); acc });
-        plays.sort_by(|a, b| a.cmp(&b));
-        plays.dedup();
-        plays
+                           .fold(vec![], |mut acc2, j| { acc2.extend(self.get_square_surroundings(i as i32, j as i32).iter().cloned()); acc2 })
+                           .iter().cloned()); acc })
+    }
+
+    pub fn get_plays(&self, color: &Square) -> Vec<(usize, usize)> {
+        let mut plays = self.check_threats();
+        if plays.is_empty() {
+            let mut player_surroundings = self.get_surroundings(color);
+            let mut opponent_surroundings = self.get_surroundings(&color.opposite());
+            plays.append(&mut player_surroundings);
+            plays.append(&mut opponent_surroundings);
+        }
+        if plays.is_empty() {
+            plays.push((9, 9))
+        }
+        plays.into_iter().unique().collect()
     }
 
     pub fn evaluation(&self, color: &Square) -> i32 {
