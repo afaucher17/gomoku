@@ -19,15 +19,17 @@ pub fn get_input() -> Option<(usize, usize)> {
 
 pub fn game_loop(start: Board)
 {
+    let depth = 4;
     let mut player = Square::Black;
     let mut board = start;
+    let mut killer_moves = vec![vec![]; depth + 1];
     loop {
         let input = if player == Square::Black {
             get_input()
         }
         else {
-            minimax(&board, 4, i32::MIN, i32::MAX, true,
-            None, &Square::White).pos
+            minimax(&board, depth, i32::MIN, i32::MAX, true,
+            None, &Square::White, killer_moves.clone()).pos
         };
         board = match board.play_at(input, &player) {
             Some(a_board) => { player = player.opposite(); a_board },
