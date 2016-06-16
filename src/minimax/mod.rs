@@ -22,14 +22,47 @@ impl Ord for Decision
     }
 }
 
+static mut KILLER_MOVES: [[Option<(usize, usize)>; 2]; 4] = [
+           [None, None], [None, None], [None, None], [None, None],
+        ];
+
+fn get_plays(board: &Board, color: &Square, depth: usize) -> Vec<(usize, usize)>
+{
+    let mut v: Vec<(usize, usize)> = Vec::new();
+    unsafe {
+        match (KILLER_MOVES[depth][0], KILLER_MOVES[depth][1])
+        {
+            (None, None) => (),
+            (Some(pos), None) | (None, Some(pos))=> v.push(pos),
+            (Some(pos), Some(pos2)) => v.extend(vec![pos, pos2]),
+        }
+    }
+    v.extend(board.get_plays(color));
+    v
+}
+
+fn add_killer_move(pos: Option<(usize, usize)>, depth: usize)
+{
+    unsafe {
+        match (KILLER_MOVES[depth][0], KILLER_MOVES[depth][1])
+        {
+            (None, None) => KILLER_MOVES[depth][0] = pos,
+            (Some(_), None) => KILLER_MOVES[depth][1] = pos,
+            (old, Some(_)) => {
+                KILLER_MOVES[depth][1] = old;
+                KILLER_MOVES[depth][0] = pos;
+            }
+        }
+    }
+}
+
 pub fn minimax(board: &Board,
                depth: usize,
                mut alpha: i32,
                mut beta: i32,
                maximizing_player: bool,
                prev_play: Option<(usize, usize)>,
-               player: &Square,
-               mut killer_moves: Vec<Vec<(usize, usize)>>)
+               player: &Square)
     -> Decision
 {
     let current_color = match maximizing_player { true => player.clone(), false => player.opposite() };
@@ -38,29 +71,28 @@ pub fn minimax(board: &Board,
             board.check_aligned(prev_play.unwrap(), &current_color))
         || board.b_capture >= 10
         || board.w_capture >= 10 {
-        let score = board.evaluation(&player);
         return Decision {
-            score: score,
+            score: board.evaluation(&player),
             pos: prev_play
         };
     }
-    let mut plays: Vec<(usize, usize)> = Vec::new();
-    if !killer_moves[depth].is_empty() { plays.append(&mut killer_moves[depth].clone()); }
-    plays.append(&mut board.get_plays(&current_color));
+    let plays: Vec<(usize, usize)> = get_plays(board, &current_color, depth - 1);
     if maximizing_player {
         let mut v = Decision { score: i32::MIN, pos: None };
         //println!(" (DEPTH = {}, POS = {:?}, (MAXIMAZING):", depth, prev_play);
         for pos in plays {
             let child = board.play_at(Some(pos), &current_color);
             if child.is_some() {
-                let score = v.score;
-                let decision = minimax(&child.unwrap(), depth - 1, alpha, beta, false, Some(pos), player, killer_moves.clone());
-                //print!(" {},", decision.score);
-                v = cmp::max(v, decision);
-                alpha = cmp::max(alpha, v.score);
+                {
+                    let score = v.score;
+                    let decision = minimax(&child.unwrap(), depth - 1, alpha, beta, false, Some(pos), player);
+                    //print!(" {},", decision.score);
+                    v = cmp::max(v, decision);
+                    alpha = cmp::max(alpha, v.score);
+                }
                 if alpha >= beta {
-                    if killer_moves[depth].len() == 2 { killer_moves[depth].remove(0); killer_moves[depth].push(v.pos.unwrap()); }
-                    //print!(" beta cutoff (beta {} <= {})", beta, v.score);
+                    add_killer_move(v.pos, depth - 1);
+                    print!(" beta cutoff (beta {} <= {})", beta, v.score);
                     break ; // beta cut-off
                 }
             }
@@ -78,14 +110,16 @@ pub fn minimax(board: &Board,
         for pos in plays {
             let child = board.play_at(Some(pos), &current_color);
             if child.is_some() {
-                let score = v.score;
-                let decision = minimax(&child.unwrap(), depth - 1, alpha, beta, true, Some(pos), player, killer_moves.clone());
-                //print!("{},", decision.score);
-                v = cmp::min(v, decision);
-                beta = cmp::min(beta, v.score);
+                {
+                    let score = v.score;
+                    let decision = minimax(&child.unwrap(), depth - 1, alpha, beta, true, Some(pos), player);
+                    //print!("{},", decision.score);
+                    v = cmp::min(v, decision);
+                    beta = cmp::min(beta, v.score);
+                }
                 if beta <= alpha {
-                    if killer_moves[depth].len() == 2 { killer_moves[depth].remove(0); killer_moves[depth].push(v.pos.unwrap()); }
-                    //print!(" alpha cutoff ({} <= alpha {})", v.score, alpha);
+                    add_killer_move(v.pos, depth);
+                    print!(" alpha cutoff ({} <= alpha {})", v.score, alpha);
                     break ; // alpha cut-off
                 }
             }

@@ -147,8 +147,10 @@ impl Board {
     pub fn get_plays(&self, color: &Square) -> Vec<(usize, usize)> {
         let mut plays = self.check_threats();
         if plays.is_empty() {
+            let mut check_capture = self.check_capture_pos();
             let mut player_surroundings = self.get_surroundings(color);
             let mut opponent_surroundings = self.get_surroundings(&color.opposite());
+            plays.append(&mut check_capture);
             plays.append(&mut player_surroundings);
             plays.append(&mut opponent_surroundings);
         }
