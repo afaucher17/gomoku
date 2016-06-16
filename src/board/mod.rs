@@ -5,4 +5,5 @@ mod square;
 mod board;
 
 pub use self::board::Board;
+pub use self::board::BoardState;
 pub use self::square::Square;

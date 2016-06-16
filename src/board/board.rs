@@ -12,7 +12,17 @@ pub struct Board
 {
     pub state: Vec<Vec<Square>>,
     pub b_capture: usize,
-    pub w_capture: usize
+    pub w_capture: usize,
+    pub game_state: BoardState,
+}
+
+#[derive(Clone, PartialEq)]
+pub enum BoardState
+{
+    InProgress,
+    Draw,
+    Victory(Square),
+    FiveAligned(Square),
 }
 
 impl fmt::Display for Board
@@ -56,7 +66,10 @@ impl<'a> From<&'a str> for Board
                     _ => Square::Empty
                 }).collect::<Vec<Square>>())
             .collect::<Vec<Vec<Square>>>(),
-            b_capture: 0, w_capture: 0 }
+            b_capture: 0,
+            w_capture: 0,
+            game_state: BoardState::InProgress,
+        }
     }
 }
 
@@ -66,6 +79,7 @@ impl Board {
             state : vec![vec![Square::Empty; 19]; 19],
             b_capture : 0,
             w_capture : 0,
+            game_state: BoardState::InProgress,
         }
     }
 
@@ -75,6 +89,13 @@ impl Board {
             Square::White => self.w_capture as i32,
             Square::Black => self.b_capture as i32,
             Square::Empty => 0,
+        }
+    }
+
+    pub fn is_terminal(&self) -> bool {
+        match self.game_state {
+            BoardState::Victory(_) | BoardState::Draw => true,
+            _ => false,
         }
     }
 
@@ -89,12 +110,45 @@ impl Board {
                 else {
                     clone.state[x][y] = color.clone();
                     if !clone.check_free_threes(x as i32, y as i32, color) {
-                        Some(clone.check_capture(color, (x, y)))
+                        clone = clone.check_capture(color, (x, y));
+                        clone.game_state = clone.get_game_state(pos.unwrap(), color);
+                        Some(clone)
                     }
                     else { None }
                 }
             },
             None => None,
+        }
+    }
+
+    fn get_game_state(&self, pos: (usize, usize), color: &Square) -> BoardState
+    {
+        if self.b_capture >= 10 {
+            BoardState::Victory(Square::Black)
+        }
+        else if *color == Square::Black && self.five_aligned(pos, color) {
+            if self.check_aligned(pos, color) {
+                BoardState::Victory(Square::Black)
+            }
+            else {
+                BoardState::FiveAligned(Square::Black)
+            }
+        }
+        else if self.w_capture >= 10 {
+            BoardState::Victory(Square::White)
+        }
+        else if *color == Square::White && self.five_aligned(pos, color) {
+            if self.check_aligned(pos, color) {
+                BoardState::Victory(Square::White)
+            } else {
+                BoardState::FiveAligned(Square::White)
+            }
+        }
+        else if self.check_full_board() {
+            BoardState::Draw
+        }
+        else {
+            BoardState::InProgress
         }
     }
 

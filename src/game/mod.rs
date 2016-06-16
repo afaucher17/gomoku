@@ -1,4 +1,4 @@
-use board::{Board, Square};
+use board::{Board, BoardState, Square};
 use minimax::minimax;
 use std::io;
 use std::i32;
@@ -40,5 +40,16 @@ pub fn game_loop(start: Board)
             None => { println!("illegal move, please try again"); board.clone() },
         };
         println!("{}", board);
+        match board.game_state {
+            BoardState::InProgress | BoardState::FiveAligned(_) => (),
+            BoardState::Draw => {
+                println!("Draw");
+                break;
+            }
+            BoardState::Victory(ref color) => {
+                println!("Player {} wins", color);
+                break;
+            }
+        }
     }
 }
