@@ -69,6 +69,15 @@ impl Board {
         }
     }
 
+    pub fn get_score(&self, color: &Square) -> usize
+    {
+        match *color {
+            Square::White => self.w_capture,
+            Square::Black => self.b_capture,
+            Square::Empty => 0,
+        }
+    }
+
     pub fn play_at(&self, pos: Option<(usize, usize)>, color: &Square) -> Option<Board> {
         match pos {
             Some((x, y)) => {
