@@ -12,7 +12,16 @@ pub struct Board
 {
     pub state: Vec<Vec<Square>>,
     pub b_capture: usize,
-    pub w_capture: usize
+    pub w_capture: usize,
+    pub board_state: BoardState,
+}
+
+pub enum BoardState
+{
+    InProgress,
+    Draw,
+    Victory { color: Square },
+    FiveAligned { color: Square },
 }
 
 impl fmt::Display for Board
@@ -96,6 +105,21 @@ impl Board {
             },
             None => None,
         }
+    }
+
+    fn get_board_state(&self, pos: Option<(usize, usize)>, color: &Square) -> BoardState
+    {
+        if board.b_capture >= 10 || (color == Square::Black
+                                     && board.check_aligned(pos.unwrap(), color)) {
+            Victory(Square::Black)
+        } else if board.w_capture >= 10 || (color == Square::White &&
+                                            board.check_aligned(pos.unwrap(), color)) {
+            Victory(Square::White)
+        }
+        else if board.check_full_board() {
+            Draw
+        }
+        else if board
     }
 
     fn get_square_surroundings(&self, x: i32, y: i32) -> Vec<(usize, usize)> {
