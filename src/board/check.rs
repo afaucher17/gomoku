@@ -68,6 +68,65 @@ impl Board
         board.clone()
     }
 
+    fn five_aligned_capture(&self) -> Vec<(usize, usize)> {
+        let sq_to_char = |sq: &Square| match *sq {
+            Square::Black => 'B',
+            Square::White => 'W', Square::Empty => '-'
+        };
+
+        let p = vec![("BWW-", vec![1, 2]), ("-WWB", vec![1, 2]),
+        ("WBB-", vec![1, 2]), ("-BBW", vec![1, 2])];
+
+        struct Right {
+            data: String,
+            fun: Box<Fn(usize) -> (usize, usize)>,
+        }
+
+        let mut t: Vec<Right> = Vec::new();
+        {
+            let mut vert = (0..19).map(|i| Right { data: (0..19)
+                                       .map(|j| sq_to_char(&self.state[i][j]))
+                                       .collect::<String>(),
+                                       fun: Box::new(move |v| (i, v as usize)) }
+                                       ).collect::<Vec<Right>>();
+            let mut hor = (0..19).map(|i| Right { data: (0..19)
+                                        .map(|j| sq_to_char(&self.state[j][i]))
+                                        .collect::<String>(),
+                                        fun: Box::new(move |v| (v as usize, i)) }
+                                        ).collect::<Vec<Right>>();
+            let mut diagup = (0..37)
+                .map(|i| Right { data: (0..19 - (19 - (i as i32 + 1)).abs())
+                    .map(|j| sq_to_char(
+                        &self.state[(cmp::max(0, i - 18) + j) as usize][(cmp::max(0, 18 - i) + j) as usize]))
+                    .collect::<String>(), 
+                    fun: Box::new(move |v| (cmp::max(0, i as i32 - 18) as usize + v, cmp::max(0, 18 - i as i32) as usize + v))
+                }).collect::<Vec<Right>>();
+            let mut diagdown = (0..37)
+                .map(|i| Right { data: (0..19 - (19 - (i as i32 + 1)).abs())
+                    .map(|j| sq_to_char(
+                        &self.state[(cmp::max(0, i - 18) + j) as usize][(cmp::min(18, i) - j) as usize]))
+                    .collect::<String>(),
+                    fun: Box::new(move |v| (cmp::max(0, i as i32 - 18) as usize + v, cmp::min(18, i as i32) as usize - v))
+                }).collect::<Vec<Right>>();
+            t.append(&mut vert);
+            t.append(&mut hor);
+            t.append(&mut diagup);
+            t.append(&mut diagdown);
+        }
+
+        let mut pos = Vec::new();
+        for right in t {
+            for &(ref pattern, ref vec) in &p {
+                if let Some(offset) = right.data.find(pattern) {
+                    for i in vec {
+                        pos.push((right.fun)(i + offset));
+                    }
+                }
+            }
+        }
+        pos
+    }
+
     fn rec_explo(&self, color: &Square, x: i32, y: i32,
                  add_x: i32, add_y: i32, acc: i32) -> i32 {
         if acc > 4 || x + add_x > 18 || y + add_y > 18
@@ -81,16 +140,26 @@ impl Board
         }
     }
 
-    pub fn check_aligned(&self, pos: (usize, usize), color: &Square) -> bool {
+    fn five_aligned(&self, pos: (usize, usize), color: &Square) -> bool {
         let (x, y) = (pos.0 as i32, pos.1 as i32);
-        if (self.rec_explo(color, x, y, 1, 1, 1)
-         + self.rec_explo(color, x, y, -1, -1, 0)) > 4
-            || (self.rec_explo(color, x, y, 1, 0, 1)
-                + self.rec_explo(color, x, y, -1, 0, 0)) > 4
-            || (self.rec_explo(color, x, y, 0, 1, 1)
-                + self.rec_explo(color, x, y, 0, -1, 0)) > 4
-            || (self.rec_explo(color, x, y, 1, -1, 1)
-                + self.rec_explo(color, x, y, -1, 1, 0)) > 4 { /*TODO check for yxx- pattern*/ true }
+        (self.rec_explo(color, x, y, 1, 1, 1)
+            + self.rec_explo(color, x, y, -1, -1, 0)) > 4
+        || (self.rec_explo(color, x, y, 1, 0, 1)
+            + self.rec_explo(color, x, y, -1, 0, 0)) > 4
+        || (self.rec_explo(color, x, y, 0, 1, 1)
+            + self.rec_explo(color, x, y, 0, -1, 0)) > 4
+        || (self.rec_explo(color, x, y, 1, -1, 1)
+            + self.rec_explo(color, x, y, -1, 1, 0)) > 4
+    }
+
+    pub fn check_aligned(&self, pos: (usize, usize), color: &Square) -> bool {
+        if self.five_aligned(pos, color) {
+            let mut test_board = self.clone();
+            let to_remove = self.five_aligned_capture();
+            to_remove.iter()
+                .fold(0, |acc, &(x, y)| { test_board.state[x][y] = Square::Empty; acc });
+            test_board.five_aligned(pos, color)
+        }
         else { false }
     }
 
