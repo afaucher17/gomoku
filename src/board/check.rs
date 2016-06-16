@@ -220,8 +220,8 @@ impl Board
                             } else {
                                 acc
                             }))
-                            + capture_heuristic(board.get_score(color))
-                            - capture_heuristic(board.get_score(color.opposite()))
+                            + capture_heuristic(self.get_score(color))
+                            - capture_heuristic(self.get_score(&color.opposite()))
     }
 
     pub fn check_free_threes(&self, x: i32, y: i32, color: &Square) -> bool {

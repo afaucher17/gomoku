@@ -69,11 +69,11 @@ impl Board {
         }
     }
 
-    pub fn get_score(&self, color: &Square) -> usize
+    pub fn get_score(&self, color: &Square) -> i32
     {
         match *color {
-            Square::White => self.w_capture,
-            Square::Black => self.b_capture,
+            Square::White => self.w_capture as i32,
+            Square::Black => self.b_capture as i32,
             Square::Empty => 0,
         }
     }
