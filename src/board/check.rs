@@ -341,7 +341,7 @@ impl Board
             t.append(&mut diagup);
             t.append(&mut diagdown);
         }
-        let capture_heuristic = |x| if x == 10 { 512 } else { x };
+        let capture_heuristic = |x| if x == 10 { 512 } else { x * 2 };
         t.iter().fold(0, |acc, s| 
                       acc + player_patterns.iter().chain(opponent_patterns.iter())
                       .fold(0, |acc, &(ref pattern, score)|
