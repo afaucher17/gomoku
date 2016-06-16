@@ -83,14 +83,15 @@ impl Board
 
     pub fn check_aligned(&self, pos: (usize, usize), color: &Square) -> bool {
         let (x, y) = (pos.0 as i32, pos.1 as i32);
-        (self.rec_explo(color, x, y, 1, 1, 1)
+        if (self.rec_explo(color, x, y, 1, 1, 1)
          + self.rec_explo(color, x, y, -1, -1, 0)) > 4
             || (self.rec_explo(color, x, y, 1, 0, 1)
                 + self.rec_explo(color, x, y, -1, 0, 0)) > 4
             || (self.rec_explo(color, x, y, 0, 1, 1)
                 + self.rec_explo(color, x, y, 0, -1, 0)) > 4
             || (self.rec_explo(color, x, y, 1, -1, 1)
-                + self.rec_explo(color, x, y, -1, 1, 0)) > 4
+                + self.rec_explo(color, x, y, -1, 1, 0)) > 4 { /*TODO check for yxx- pattern*/ true }
+        else { false }
     }
 
     pub fn check_threats(&self) -> Vec<(usize, usize)> {
