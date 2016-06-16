@@ -103,12 +103,73 @@ impl Board
         let p = vec![("WWWW-", vec![4]), ("BBBB-", vec![4]),
         ("WWWW-W", vec![3]), ("BBBB-B", vec![3]),
         ("WW-WW", vec![2]), ("BB-BB", vec![2]),
-        ("W-WWW", vec![1]), ("BB-BB", vec![1]),
+        ("W-WWW", vec![1]), ("B-BBB", vec![1]),
         ("-WWWW", vec![0]), ("-BBBB", vec![0]),
         ("--WWW", vec![1]), ("--BBB", vec![1]),
         ("WWW--", vec![3]), ("BBB--", vec![3]),
+        ("-WWW-", vec![0, 4]), ("-BBB-", vec![0, 4]),
         ("W-WW-", vec![1, 4]), ("B-BB-", vec![1, 4]),
         ("-WW-W", vec![3, 0]), ("-BB-B", vec![3, 0])];
+
+        struct Right {
+            data: String,
+            fun: Box<Fn(usize) -> (usize, usize)>,
+        }
+        
+        let mut t: Vec<Right> = Vec::new();
+        {
+            let mut vert = (0..19).map(|i| Right { data: (0..19)
+                                       .map(|j| sq_to_char(&self.state[i][j]))
+                                       .collect::<String>(),
+                                       fun: Box::new(move |v| (i, v as usize)) }
+                                       ).collect::<Vec<Right>>();
+            let mut hor = (0..19).map(|i| Right { data: (0..19)
+                                        .map(|j| sq_to_char(&self.state[j][i]))
+                                        .collect::<String>(),
+                                        fun: Box::new(move |v| (v as usize, i)) } 
+                                        ).collect::<Vec<Right>>();
+            let mut diagup = (0..37)
+                .map(|i| Right { data: (0..19 - (19 - (i as i32 + 1)).abs())
+                    .map(|j| sq_to_char(
+                        &self.state[(cmp::max(0, i - 18) + j) as usize][(cmp::max(0, 18 - i) + j) as usize]))
+                    .collect::<String>(), 
+                    fun: Box::new(move |v| (cmp::max(0, i as i32 - 18) as usize + v, cmp::max(0, 18 - i as i32) as usize + v))
+                }).collect::<Vec<Right>>();
+            let mut diagdown = (0..37)
+                .map(|i| Right { data: (0..19 - (19 - (i as i32 + 1)).abs())
+                    .map(|j| sq_to_char(
+                        &self.state[(cmp::max(0, i - 18) + j) as usize][(cmp::min(18, i) - j) as usize]))
+                    .collect::<String>(),
+                    fun: Box::new(move |v| (cmp::max(0, i as i32 - 18) as usize + v, cmp::min(18, i as i32) as usize - v))
+                }).collect::<Vec<Right>>();
+            t.append(&mut vert);
+            t.append(&mut hor);
+            t.append(&mut diagup);
+            t.append(&mut diagdown);
+        }
+
+        let mut pos = Vec::new();
+        for right in t {
+            for &(ref pattern, ref vec) in &p {
+                if let Some(offset) = right.data.find(pattern) {
+                    for i in vec {
+                        pos.push((right.fun)(i + offset));
+                    }
+                }
+            }
+        }
+        pos
+    }
+
+    pub fn check_capture_pos(&self) -> Vec<(usize, usize)>
+    {
+        let sq_to_char = |sq: &Square| match *sq {
+            Square::Black => 'B',
+            Square::White => 'W', Square::Empty => '-'
+        };
+
+        let p = vec![("BWW-", vec![3]), ("WBB-", vec![3]),
+        ("-WWB", vec![0]), ("-BBW", vec![0])];
 
         struct Right {
             data: String,
@@ -165,10 +226,10 @@ impl Board
             Square::Black => 'B', Square::White => 'W', Square::Empty => '-'
         };
 
-        let patterns = vec![("xxxxx", 512), ("xxxx-", 64), ("-xxxx", 64),
-        ("xxx-x", 64), ("x-xxx", 64), ("xx-xx", 64), ("xxx--", 8),
-        ("--xxx", 8), ("-xxx-", 4), ("-x-xx", 2), ("xx-x-", 2),
-        ("--xx-", 1), ("-xx--", 1)];
+        let patterns = vec![("xxxxx", 512), ("xxxx-", 128), ("-xxxx", 128),
+        ("xxx-x", 128), ("x-xxx", 128), ("xx-xx", 128), ("xxx--", 16),
+        ("--xxx", 16), ("-xxx-", 16), ("-x-xx", 4), ("xx-x-", 4),
+        ("--xx-", 2), ("-xx--", 2)];
         let player_patterns = patterns.iter().map(|&(s, score)|
                                 (s.replace("x", match *color {
                                     Square::Black => "B",

@@ -2,6 +2,7 @@ use board::{Board, Square};
 use minimax::minimax;
 use std::io;
 use std::i32;
+use std::time::{SystemTime};
 
 pub fn get_input() -> Option<(usize, usize)> {
     let mut parsed: Vec<Result<usize, _>>;
@@ -23,14 +24,15 @@ pub fn game_loop(start: Board)
     let mut player = Square::Black;
     let mut board = start;
     loop {
+        let now = SystemTime::now();
         let input = if player == Square::Black {
             get_input()
         }
         else {
-            let mut killer_moves = vec![vec![]; depth + 1];
             minimax(&board, depth, i32::MIN, i32::MAX, true,
-            None, &Square::White, killer_moves).pos
+            None, &Square::White).pos
         };
+        println!("{:?}", now.elapsed());
         board = match board.play_at(input, &player) {
             Some(a_board) => { player = player.opposite(); a_board },
             None => { println!("illegal move, please try again"); board.clone() },
