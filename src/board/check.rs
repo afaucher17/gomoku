@@ -280,6 +280,7 @@ impl Board
             t.append(&mut diagup);
             t.append(&mut diagdown);
         }
+        let capture_heuristic = |x| if x == 10 { 512 } else { x };
         t.iter().fold(0, |acc, s| 
                       acc + player_patterns.iter().chain(opponent_patterns.iter())
                       .fold(0, |acc, &(ref pattern, score)|
@@ -288,6 +289,8 @@ impl Board
                             } else {
                                 acc
                             }))
+                            + capture_heuristic(self.get_score(color))
+                            - capture_heuristic(self.get_score(&color.opposite()))
     }
 
     pub fn check_free_threes(&self, x: i32, y: i32, color: &Square) -> bool {
