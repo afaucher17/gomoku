@@ -26,9 +26,7 @@ pub fn game_loop(start: Board)
     loop {
         let now = SystemTime::now();
         let input = if player == Square::Black {
-            //get_input()
-            minimax(&board, depth, i32::MIN, i32::MAX, true,
-            None, &Square::Black).pos
+            get_input()
         }
         else {
             minimax(&board, depth, i32::MIN, i32::MAX, true,
