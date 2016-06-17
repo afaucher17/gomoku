@@ -1,10 +1,7 @@
 #[macro_use]
 extern crate gomoku;
-
-use gomoku::board::{Board, Square};
+use gomoku::board::{Board};
 use gomoku::game;
-use gomoku::minimax::minimax;
-use std::i32;
 
 fn main() {
 /*    for play in board.get_plays(&Square::Black) {

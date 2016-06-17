@@ -1,8 +1,5 @@
 use board::board::Board;
 use board::square::Square;
-
-use std::time::{Duration, SystemTime};
-
 use std::cmp;
 
 impl Board
@@ -230,15 +227,18 @@ impl Board
         pos
     }
 
-    pub fn check_capture_pos(&self) -> Vec<(usize, usize)>
+    pub fn check_capture_pos(&self, color: &Square) -> Vec<(usize, usize)>
     {
         let sq_to_char = |sq: &Square| match *sq {
             Square::Black => 'B',
             Square::White => 'W', Square::Empty => '-'
         };
 
-        let p = vec![("BWW-", vec![3]), ("WBB-", vec![3]),
-        ("-WWB", vec![0]), ("-BBW", vec![0])];
+        let p = match *color {
+            Square::Black => vec![("BWW-", vec![3]), ("-WWB", vec![0])],
+            Square::White => vec![("WBB-", vec![3]), ("-BBW", vec![0])],
+            Square::Empty => vec![],
+        };
 
         struct Right {
             data: String,
@@ -295,10 +295,10 @@ impl Board
             Square::Black => 'B', Square::White => 'W', Square::Empty => '-'
         };
 
-        let patterns = vec![("xxxxx", 512), ("xxxx-", 128), ("-xxxx", 128),
-        ("xxx-x", 128), ("x-xxx", 128), ("xx-xx", 128), ("xxx--", 16),
-        ("--xxx", 16), ("-xxx-", 16), ("-x-xx", 4), ("xx-x-", 4),
-        ("--xx-", 2), ("-xx--", 2)];
+        let patterns = vec![("xxxxx", 10240), ("xxxx-", 1280), ("-xxxx", 1280),
+        ("xxx-x", 1280), ("x-xxx", 1280), ("xx-xx", 1280), ("xxx--", 160),
+        ("--xxx", 160), ("-xxx-", 160), ("-x-xx", 40), ("xx-x-", 40),
+        ("--xx-", 20), ("-xx--", 20)];
         let player_patterns = patterns.iter().map(|&(s, score)|
                                 (s.replace("x", match *color {
                                     Square::Black => "B",
@@ -341,7 +341,7 @@ impl Board
             t.append(&mut diagup);
             t.append(&mut diagdown);
         }
-        let capture_heuristic = |x| if x == 10 { 512 } else { x };
+        let capture_heuristic = |x| if x == 10 { 500000 } else { x * 21 };
         t.iter().fold(0, |acc, s| 
                       acc + player_patterns.iter().chain(opponent_patterns.iter())
                       .fold(0, |acc, &(ref pattern, score)|

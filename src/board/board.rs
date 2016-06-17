@@ -16,6 +16,15 @@ pub struct Board
     pub game_state: BoardState,
 }
 
+pub enum Move
+{
+    Illegal,
+    DoubleThrees,
+    Legal(Board, (usize, usize)),
+    OutOfBounds,
+    Other(&'static str),
+}
+
 #[derive(Clone, PartialEq)]
 pub enum BoardState
 {
@@ -29,7 +38,7 @@ impl fmt::Display for Board
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
     {
-        write!(f, "{} Black Captures: {} White Captures: {}", self.state.iter()
+        write!(f, "{}Black Captures: {} White Captures: {}", self.state.iter()
                .map(|line| line.iter()
                     .map(|square| match *square {
                         Square::Empty => "_",
@@ -44,7 +53,7 @@ impl fmt::Debug for Board
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
     {
-        write!(f, "{} Black Captures: {} White Captures: {}", self.state.iter()
+        write!(f, "{}Black Captures: {} White Captures: {}", self.state.iter()
                .map(|line| line.iter()
                     .map(|square| match *square {
                         Square::Empty => "_",
@@ -99,25 +108,27 @@ impl Board {
         }
     }
 
-    pub fn play_at(&self, pos: Option<(usize, usize)>, color: &Square) -> Option<Board> {
+    pub fn play_at(&self, pos: Option<(usize, usize)>, color: &Square) -> Move {
         match pos {
             Some((x, y)) => {
                 let mut clone = self.clone();
-                if !(0..19).contains(x) || !(0..19).contains(y)
-                    || clone.state[x][y] != Square::Empty {
-                        None
-                    }
+                if !(0..19).contains(x) || !(0..19).contains(y) {
+                    Move::OutOfBounds
+                }
+                else if clone.state[x][y] != Square::Empty {
+                    Move::Illegal
+                }
                 else {
                     clone.state[x][y] = color.clone();
                     if !clone.check_free_threes(x as i32, y as i32, color) {
                         clone = clone.check_capture(color, (x, y));
                         clone.game_state = clone.get_game_state(pos.unwrap(), color);
-                        Some(clone)
+                        Move::Legal(clone, (x, y))
                     }
-                    else { None }
+                    else { Move::DoubleThrees }
                 }
             },
-            None => None,
+            None => Move::Other("Unknown position."),
         }
     }
 
@@ -192,26 +203,33 @@ impl Board {
     fn get_surroundings(&self, color: &Square) -> Vec<(usize, usize)>
     {
         (0..19).fold(vec![], |mut acc, i| {
-                acc.extend((0..19)
-                           .filter(|j: &usize| self.state[i][*j] != Square::Empty && self.state[i][*j] == *color)
-                           .fold(vec![], |mut acc2, j| { acc2.extend(self.get_square_surroundings(i as i32, j as i32).iter().cloned()); acc2 })
-                           .iter().cloned()); acc })
+            acc.extend((0..19)
+                       .filter(|j: &usize| self.state[i][*j] != Square::Empty && self.state[i][*j] == *color)
+                       .fold(vec![], |mut acc2, j| { acc2.extend(self.get_square_surroundings(i as i32, j as i32).iter().cloned()); acc2 })
+                       .iter().cloned()); acc })
     }
 
     pub fn get_plays(&self, color: &Square) -> Vec<(usize, usize)> {
-        let mut plays = self.check_threats();
-        if plays.is_empty() {
-            let mut check_capture = self.check_capture_pos();
-            let mut player_surroundings = self.get_surroundings(color);
-            let mut opponent_surroundings = self.get_surroundings(&color.opposite());
-            plays.append(&mut check_capture);
-            plays.append(&mut player_surroundings);
-            plays.append(&mut opponent_surroundings);
+        match self.game_state {
+            BoardState::FiveAligned(ref col) if *col == *color => self.check_capture_pos(color),
+            _ => {
+                let mut plays = self.check_threats();
+                let mut check_capture = self.check_capture_pos(color);
+                plays.append(&mut check_capture);
+                if plays.is_empty() {
+                    let mut player_surroundings = self.get_surroundings(color);
+                    plays.append(&mut player_surroundings);
+                }
+                if plays.is_empty() {
+                    let mut opponent_surroundings = self.get_surroundings(&color.opposite());
+                    plays.append(&mut opponent_surroundings);
+                }
+                if plays.is_empty() {
+                    plays.push((9, 9));
+                }
+                plays.into_iter().unique().collect()
+            }
         }
-        if plays.is_empty() {
-            plays.push((9, 9))
-        }
-        plays.into_iter().unique().collect()
     }
 
     pub fn evaluation(&self, color: &Square) -> i32 {

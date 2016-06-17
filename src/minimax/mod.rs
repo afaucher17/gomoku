@@ -1,9 +1,8 @@
-use board::{Board, Square};
+use board::{Board, Square, Move};
 
 use std::cmp;
 use std::cmp::Ordering;
 use std::i32;
-use std::cmp::PartialEq;
 
 #[derive(PartialEq, Eq, PartialOrd, Debug)]
 pub struct Decision
@@ -77,18 +76,17 @@ pub fn minimax(board: &Board,
         let mut v = Decision { score: i32::MIN, pos: None };
         //println!(" (DEPTH = {}, POS = {:?}, (MAXIMAZING):", depth, prev_play);
         for pos in plays {
-            let child = board.play_at(Some(pos), &current_color);
-            if child.is_some() {
+            if let Move::Legal(child, _) = board.play_at(Some(pos), &current_color)
+            {
                 {
-                    let score = v.score;
-                    let decision = minimax(&child.unwrap(), depth - 1, alpha, beta, false, Some(pos), player);
+                    let decision = minimax(&child, depth - 1, alpha, beta, false, Some(pos), player);
                     //print!(" {},", decision.score);
                     v = cmp::max(v, decision);
                     alpha = cmp::max(alpha, v.score);
                 }
                 if alpha >= beta {
                     add_killer_move(v.pos, depth - 1);
-                    print!(" beta cutoff (beta {} <= {})", beta, v.score);
+                    //print!(" beta cutoff (beta {} <= {})", beta, v.score);
                     break ; // beta cut-off
                 }
             }
@@ -104,18 +102,16 @@ pub fn minimax(board: &Board,
         let mut v = Decision { score: i32::MAX, pos: None };
         //println!(" (DEPTH = {}, POS = {:?}, (MINIMIZING): ", depth, prev_play);
         for pos in plays {
-            let child = board.play_at(Some(pos), &current_color);
-            if child.is_some() {
+            if let Move::Legal(child, _) = board.play_at(Some(pos), &current_color) {
                 {
-                    let score = v.score;
-                    let decision = minimax(&child.unwrap(), depth - 1, alpha, beta, true, Some(pos), player);
+                    let decision = minimax(&child, depth - 1, alpha, beta, true, Some(pos), player);
                     //print!("{},", decision.score);
                     v = cmp::min(v, decision);
                     beta = cmp::min(beta, v.score);
                 }
                 if beta <= alpha {
                     add_killer_move(v.pos, depth);
-                    print!(" alpha cutoff ({} <= alpha {})", v.score, alpha);
+                    //print!(" alpha cutoff ({} <= alpha {})", v.score, alpha);
                     break ; // alpha cut-off
                 }
             }
