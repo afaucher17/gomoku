@@ -17,6 +17,8 @@ impl Board
                         && a == color => {
                     board.state[xb][yb] = Square::Empty;
                     board.state[xc][yc] = Square::Empty;
+                    board.add_move((xb, yb), &color.opposite());
+                    board.add_move((xc, yc), &color.opposite());
                     board.b_capture +=
                         if *color == Square::Black { 2 } else { 0 };
                     board.w_capture +=
@@ -230,15 +232,18 @@ impl Board
         pos
     }
 
-    pub fn check_capture_pos(&self) -> Vec<(usize, usize)>
+    pub fn check_capture_pos(&self, color: &Square) -> Vec<(usize, usize)>
     {
         let sq_to_char = |sq: &Square| match *sq {
             Square::Black => 'B',
             Square::White => 'W', Square::Empty => '-'
         };
 
-        let p = vec![("BWW-", vec![3]), ("WBB-", vec![3]),
-        ("-WWB", vec![0]), ("-BBW", vec![0])];
+        let p = match *color { 
+            Square::Black => vec![("BWW-", vec![3]), ("WBB-", vec![3])],
+            Square::White => vec![("-WWB", vec![0]), ("-BBW", vec![0])],
+            Square::Empty => vec![],
+        };
 
         struct Right {
             data: String,
@@ -290,15 +295,15 @@ impl Board
         pos
     }
 
-    pub fn check_patterns(&self, color: &Square) -> i32 {
+    pub fn check_patterns(&self, color: &Square, current_color: &Square) -> i32 {
         let sq_to_char = |sq: &Square| match *sq {
             Square::Black => 'B', Square::White => 'W', Square::Empty => '-'
         };
 
-        let patterns = vec![("xxxxx", 512), ("xxxx-", 128), ("-xxxx", 128),
-        ("xxx-x", 128), ("x-xxx", 128), ("xx-xx", 128), ("xxx--", 16),
-        ("--xxx", 16), ("-xxx-", 16), ("-x-xx", 4), ("xx-x-", 4),
-        ("--xx-", 2), ("-xx--", 2)];
+        let patterns = vec![("xxxxx", 5120), ("xxxx-", 1280), ("-xxxx", 1280),
+        ("xxx-x", 1280), ("x-xxx", 1280), ("xx-xx", 1280), ("xxx--", 160),
+        ("--xxx", 160), ("-xxx-", 160), ("-x-xx", 40), ("xx-x-", 40),
+        ("--xx-", 10), ("-xx--", 10)];
         let player_patterns = patterns.iter().map(|&(s, score)|
                                 (s.replace("x", match *color {
                                     Square::Black => "B",
@@ -341,7 +346,7 @@ impl Board
             t.append(&mut diagup);
             t.append(&mut diagdown);
         }
-        let capture_heuristic = |x| if x == 10 { 512 } else { x * 2 };
+        let capture_heuristic = |x| if x == 10 { 5120 } else { x * 15 };
         t.iter().fold(0, |acc, s| 
                       acc + player_patterns.iter().chain(opponent_patterns.iter())
                       .fold(0, |acc, &(ref pattern, score)|

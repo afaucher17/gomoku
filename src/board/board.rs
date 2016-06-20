@@ -1,10 +1,12 @@
 extern crate itertools;
-
-use std::fmt;
+extern crate rand;
 
 use board::square::Square;
 
+use std::fmt;
 use self::itertools::Itertools;
+use std::hash::{Hash, Hasher};
+use self::rand::Rng;
 
 #[derive(Clone)]
 #[derive(PartialEq)]
@@ -14,6 +16,7 @@ pub struct Board
     pub b_capture: usize,
     pub w_capture: usize,
     pub game_state: BoardState,
+    pub hash: u64,
 }
 
 #[derive(Clone, PartialEq)]
@@ -24,6 +27,8 @@ pub enum BoardState
     Victory(Square),
     FiveAligned(Square),
 }
+
+static mut ZOBRIST_ARRAY: [[u64; 361]; 2] = [[0; 361]; 2];
 
 impl fmt::Display for Board
 {
@@ -58,7 +63,7 @@ impl fmt::Debug for Board
 impl<'a> From<&'a str> for Board
 {
     fn from(s: &'a str) -> Self {
-        Board { state: s.split('\n').collect::<Vec<&'a str>>()
+        let mut board = Board { state: s.split('\n').collect::<Vec<&'a str>>()
             .iter()
                 .map(|s| s.chars().map(|c| match c {
                     'B' => Square::Black,
@@ -68,8 +73,11 @@ impl<'a> From<&'a str> for Board
             .collect::<Vec<Vec<Square>>>(),
             b_capture: 0,
             w_capture: 0,
+            hash: 0,
             game_state: BoardState::InProgress,
-        }
+        };
+        board.generate_hash();
+        board
     }
 }
 
@@ -80,6 +88,45 @@ impl Board {
             b_capture : 0,
             w_capture : 0,
             game_state: BoardState::InProgress,
+            hash : 0,
+        }
+    }
+
+    pub fn init_zobrist_array() {
+        unsafe {
+            let mut rng = rand::thread_rng();
+            for i in 0..2 {
+                for j in 0..361 {
+                    ZOBRIST_ARRAY[i][j] = rng.gen::<u64>();
+                }
+            }
+        }
+    }
+
+    pub fn add_move(&mut self, pos: (usize, usize), color: &Square) 
+    {
+        let (x, y) = pos;
+        unsafe {
+            self.hash ^= ZOBRIST_ARRAY[match *color {
+                Square::Black => 0,
+                Square::White => 1,
+                _ => 0,
+            }][x * 19 + y];
+        };
+    }
+
+    pub fn generate_hash(&mut self)
+    {
+        for i in 0..19
+        {
+            for j in 0..19
+            {
+                match self.state[i][j] {
+                    Square::Black => self.add_move((i, j), &Square::Black),
+                    Square::White => self.add_move((i, j), &Square::White),
+                    Square::Empty => ()
+                }
+            }
         }
     }
 
@@ -112,6 +159,7 @@ impl Board {
                     if !clone.check_free_threes(x as i32, y as i32, color) {
                         clone = clone.check_capture(color, (x, y));
                         clone.game_state = clone.get_game_state(pos.unwrap(), color);
+                        clone.add_move(pos.unwrap(), color);
                         Some(clone)
                     }
                     else { None }
@@ -200,13 +248,11 @@ impl Board {
 
     pub fn get_plays(&self, color: &Square) -> Vec<(usize, usize)> {
         let mut plays = self.check_threats();
+        let mut check_capture = self.check_capture_pos(color);
+        plays.append(&mut check_capture);
         if plays.is_empty() {
-            let mut check_capture = self.check_capture_pos();
             let mut player_surroundings = self.get_surroundings(color);
-            let mut opponent_surroundings = self.get_surroundings(&color.opposite());
-            plays.append(&mut check_capture);
             plays.append(&mut player_surroundings);
-            plays.append(&mut opponent_surroundings);
         }
         if plays.is_empty() {
             plays.push((9, 9))
@@ -214,7 +260,7 @@ impl Board {
         plays.into_iter().unique().collect()
     }
 
-    pub fn evaluation(&self, color: &Square) -> i32 {
-        self.check_patterns(color)
+    pub fn evaluation(&self, player: &Square, current_player: &Square) -> i32 {
+        self.check_patterns(player, current_player)
     }
 }

@@ -68,7 +68,7 @@ pub fn minimax(board: &Board,
     let current_color = match maximizing_player { true => player.clone(), false => player.opposite() };
     if depth == 0 || board.is_terminal() {
         return Decision {
-            score: board.evaluation(&player),
+            score: board.evaluation(&player, &current_color),
             pos: prev_play
         };
     }
