@@ -5,6 +5,7 @@ use board::{Board, Square, Move};
 use std::cmp;
 use std::cmp::Ordering;
 use std::i32;
+use std::collections::HashMap;
 use self::time::PreciseTime;
 
 #[derive(PartialEq, Eq, PartialOrd, Debug)]
@@ -12,6 +13,20 @@ pub struct Decision
 {
     score: i32,
     pub pos: Option<(usize, usize)>
+}
+
+pub struct TTEntry
+{
+    score: i32,
+    tttype: TTType,
+    depth: usize,
+}
+
+enum TTType
+{
+    ExactValue,
+    Lowerbound,
+    Upperbound,
 }
 
 impl Ord for Decision
@@ -25,10 +40,10 @@ impl Ord for Decision
 }
 
 static mut KILLER_MOVES: [[Option<(usize, usize)>; 2]; 12] = [
-           [None, None], [None, None], [None, None], [None, None],
-           [None, None], [None, None], [None, None], [None, None],
-           [None, None], [None, None], [None, None], [None, None],
-        ];
+    [None, None], [None, None], [None, None], [None, None],
+    [None, None], [None, None], [None, None], [None, None],
+    [None, None], [None, None], [None, None], [None, None],
+];
 
 fn get_plays(board: &Board, color: &Square, depth: usize) -> Vec<(usize, usize)>
 {
@@ -67,19 +82,52 @@ pub fn minimax(board: &Board,
                maximizing_player: bool,
                prev_play: Option<(usize, usize)>,
                player: &Square,
-               start: PreciseTime)
+               start: PreciseTime,
+               ttmap: &mut HashMap<u64, TTEntry>
+              )
     -> Decision
 {
     let current_color = match maximizing_player { true => player.clone(), false => player.opposite() };
+    // Time-out
     if start.to(PreciseTime::now()).num_milliseconds() >= 500 {
         return Decision {
             score: 0,
             pos: None
         };
     }
+
+
+    // Transition Table
+    {
+        let tte = ttmap.get(&board.hash);
+        if tte.is_some() && tte.unwrap().depth >= depth
+        {
+            let tte = tte.unwrap();
+            match tte.tttype {
+                TTType::ExactValue => return Decision { score: tte.score, pos: prev_play },
+                TTType::Lowerbound if tte.score > alpha => alpha = tte.score,
+                TTType::Upperbound if tte.score < beta => beta = tte.score,
+                _ => ()
+            }
+            if alpha >= beta {
+                return Decision { score: tte.score, pos: prev_play };
+            }
+        }
+    }
+    // Terminal Node
     if depth == 0 || board.is_terminal() {
+        let value = board.evaluation(&player, &current_color);
+        if value <= alpha {
+            ttmap.insert(board.hash, TTEntry { score: value, tttype: TTType::Lowerbound, depth: depth });
+        }
+        else if value >= beta {
+            ttmap.insert(board.hash, TTEntry { score: value, tttype: TTType::Upperbound, depth: depth });
+        }
+        else {
+            ttmap.insert(board.hash, TTEntry { score: value, tttype: TTType::ExactValue, depth: depth });
+        }
         return Decision {
-            score: board.evaluation(&player, &current_color),
+            score: value,
             pos: prev_play
         };
     }
@@ -91,7 +139,7 @@ pub fn minimax(board: &Board,
             if let Move::Legal(child, _) = board.play_at(Some(pos), &current_color)
             {
                 {
-                    let decision = minimax(&child, depth - 1, alpha, beta, false, Some(pos), player, start);
+                    let decision = minimax(&child, depth - 1, alpha, beta, false, Some(pos), player, start, ttmap);
                     if decision.pos == None { return decision; }
                     //print!(" {},", decision.score);
                     v = cmp::max(v, decision);
@@ -104,8 +152,18 @@ pub fn minimax(board: &Board,
                 }
             }
         }
+        let value = v.score;
+        if value <= alpha {
+            ttmap.insert(board.hash, TTEntry { score: value, tttype: TTType::Lowerbound, depth: depth });
+        }
+        else if value >= beta {
+            ttmap.insert(board.hash, TTEntry { score: value, tttype: TTType::Upperbound, depth: depth });
+        }
+        else {
+            ttmap.insert(board.hash, TTEntry { score: value, tttype: TTType::ExactValue, depth: depth });
+        }
         let decision = Decision { 
-            score: v.score,
+            score: value,
             pos: if prev_play.is_none() { v.pos } else { prev_play },
         };
         //println!(") => ({}, {:?})", v.score, decision.pos.unwrap());
@@ -117,7 +175,7 @@ pub fn minimax(board: &Board,
         for pos in plays {
             if let Move::Legal(child, _) = board.play_at(Some(pos), &current_color) {
                 {
-                    let decision = minimax(&child, depth - 1, alpha, beta, true, Some(pos), player, start);
+                    let decision = minimax(&child, depth - 1, alpha, beta, true, Some(pos), player, start, ttmap);
                     if decision.pos == None { return decision; }
                     //print!("{},", decision.score);
                     v = cmp::min(v, decision);
@@ -129,6 +187,16 @@ pub fn minimax(board: &Board,
                     break ; // alpha cut-off
                 }
             }
+        }
+        let value = v.score;
+        if value <= alpha {
+            ttmap.insert(board.hash, TTEntry { score: value, tttype: TTType::Lowerbound, depth: depth });
+        }
+        else if value >= beta {
+            ttmap.insert(board.hash, TTEntry { score: value, tttype: TTType::Upperbound, depth: depth });
+        }
+        else {
+            ttmap.insert(board.hash, TTEntry { score: value, tttype: TTType::ExactValue, depth: depth });
         }
         let decision = Decision {
             score: v.score,

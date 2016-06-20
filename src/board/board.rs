@@ -5,7 +5,6 @@ use board::square::Square;
 
 use std::fmt;
 use self::itertools::Itertools;
-use std::hash::{Hash, Hasher};
 use self::rand::Rng;
 
 #[derive(Clone)]
@@ -258,17 +257,6 @@ impl Board {
     }
 
     pub fn get_plays(&self, color: &Square) -> Vec<(usize, usize)> {
-<<<<<<< HEAD
-        let mut plays = self.check_threats();
-        let mut check_capture = self.check_capture_pos(color);
-        plays.append(&mut check_capture);
-        if plays.is_empty() {
-            let mut player_surroundings = self.get_surroundings(color);
-            plays.append(&mut player_surroundings);
-        }
-        if plays.is_empty() {
-            plays.push((9, 9))
-=======
         match self.game_state {
             BoardState::FiveAligned(ref col) if *col == *color => self.check_capture_pos(color),
             _ => {
@@ -288,7 +276,6 @@ impl Board {
                 }
                 plays.into_iter().unique().collect()
             }
->>>>>>> thomas
         }
     }
 

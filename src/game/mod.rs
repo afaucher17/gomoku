@@ -1,11 +1,13 @@
 extern crate time;
 
 use board::{Board, BoardState, Move, Square};
+use minimax::TTEntry;
 use minimax::minimax;
 
 use std::io;
 use std::i32;
 use self::time::PreciseTime;
+use std::collections::HashMap;
 
 pub fn get_input_human() -> Option<(usize, usize)> {
     let mut parsed: Vec<Result<usize, _>>;
@@ -21,11 +23,11 @@ pub fn get_input_human() -> Option<(usize, usize)> {
     Some((parsed[0].clone().unwrap() - 1, parsed[1].clone().unwrap() - 1))
 }
 
-fn get_input_ia(board: &Board, player: &Square, now: PreciseTime) -> Option<(usize, usize)> {
+fn get_input_ia(board: &Board, player: &Square, now: PreciseTime, ttmap: &mut HashMap<u64, TTEntry>) -> Option<(usize, usize)> {
 
     let mut prev_value: Option<(usize, usize)> = None;
     for depth in 1..13 {
-        let value = minimax(board, depth, i32::MIN, i32::MAX, true, None, player, now).pos;
+        let value = minimax(board, depth, i32::MIN, i32::MAX, true, None, player, now, ttmap).pos;
         if value == None { println!("Maximum depth in imparted time: {}", depth); break; }
         else { prev_value = value; }
     }
@@ -36,6 +38,7 @@ pub fn game_loop(start: Board)
 {
     let mut player = Square::Black;
     let mut board = start;
+    let mut ttmap: HashMap<u64, TTEntry> = HashMap::new();
     println!("{}", board);
     loop {
         let now = PreciseTime::now();
@@ -44,7 +47,7 @@ pub fn game_loop(start: Board)
             //get_input_ia(&board, &Square::Black, now)
         }
         else {
-            get_input_ia(&board, &Square::White, now)
+            get_input_ia(&board, &Square::White, now, &mut ttmap)
         };
         println!("Time since last move: {}", now.to(PreciseTime::now()));
         board = match board.play_at(input, &player) {

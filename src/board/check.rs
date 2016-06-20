@@ -306,13 +306,13 @@ impl Board
                                     Square::Black => "B",
                                     Square::White => "W",
                                     _ => " ",
-                                }), score)).collect::<Vec<_>>();
+                                }), if *color != *current_color { (score as f64 * 1.0) as i32 } else { score })).collect::<Vec<_>>();
         let opponent_patterns = patterns.iter().map(|&(s, score)|
                                 (s.replace("x", match color.opposite() {
                                     Square::Black => "B",
                                     Square::White => "W",
                                     _ => " ",
-                                }), -score)).collect::<Vec<_>>();
+                                }), if color.opposite() != *current_color { (-score as f64 * 1.0) as i32 } else { -score })).collect::<Vec<_>>();
         let mut t = Vec::new();
         {
             let mut vert = (0..19).map(|i| (0..19)
@@ -343,11 +343,7 @@ impl Board
             t.append(&mut diagup);
             t.append(&mut diagdown);
         }
-<<<<<<< HEAD
-        let capture_heuristic = |x| if x == 10 { 5120 } else { x * 15 };
-=======
         let capture_heuristic = |x| if x == 10 { 500000 } else { x * 21 };
->>>>>>> thomas
         t.iter().fold(0, |acc, s| 
                       acc + player_patterns.iter().chain(opponent_patterns.iter())
                       .fold(0, |acc, &(ref pattern, score)|
@@ -356,8 +352,16 @@ impl Board
                             } else {
                                 acc
                             }))
-                            + capture_heuristic(self.get_score(color))
-                            - capture_heuristic(self.get_score(&color.opposite()))
+                            + if *color != *current_color { 
+                                (capture_heuristic(self.get_score(color)) as f64 * 1.0) as i32
+                            } else {
+                                capture_heuristic(self.get_score(color))
+                            }
+                            - if color.opposite() != *current_color {
+                                (capture_heuristic(self.get_score(&color.opposite())) as f64 * 1.0) as i32
+                            } else {
+                                capture_heuristic(self.get_score(&color.opposite()))
+                            }
     }
 
     pub fn check_free_threes(&self, x: i32, y: i32, color: &Square) -> bool {
