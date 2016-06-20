@@ -237,8 +237,8 @@ impl Board
         };
 
         let p = match *color { 
-            Square::Black => vec![("BWW-", vec![3]), ("WBB-", vec![3])],
-            Square::White => vec![("-WWB", vec![0]), ("-BBW", vec![0])],
+            Square::Black => vec![("BWW-", vec![3]), ("-WWB", vec![0])],
+            Square::White => vec![("-BBW", vec![0]), ("WBB-", vec![3])],
             Square::Empty => vec![],
         };
 
