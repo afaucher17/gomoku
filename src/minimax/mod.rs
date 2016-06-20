@@ -1,9 +1,11 @@
-use board::{Board, Square};
+extern crate time;
+
+use board::{Board, Square, Move};
 
 use std::cmp;
 use std::cmp::Ordering;
 use std::i32;
-use std::cmp::PartialEq;
+use self::time::PreciseTime;
 
 #[derive(PartialEq, Eq, PartialOrd, Debug)]
 pub struct Decision
@@ -22,7 +24,9 @@ impl Ord for Decision
     }
 }
 
-static mut KILLER_MOVES: [[Option<(usize, usize)>; 2]; 4] = [
+static mut KILLER_MOVES: [[Option<(usize, usize)>; 2]; 12] = [
+           [None, None], [None, None], [None, None], [None, None],
+           [None, None], [None, None], [None, None], [None, None],
            [None, None], [None, None], [None, None], [None, None],
         ];
 
@@ -62,10 +66,17 @@ pub fn minimax(board: &Board,
                mut beta: i32,
                maximizing_player: bool,
                prev_play: Option<(usize, usize)>,
-               player: &Square)
+               player: &Square,
+               start: PreciseTime)
     -> Decision
 {
     let current_color = match maximizing_player { true => player.clone(), false => player.opposite() };
+    if start.to(PreciseTime::now()).num_milliseconds() >= 500 {
+        return Decision {
+            score: 0,
+            pos: None
+        };
+    }
     if depth == 0 || board.is_terminal() {
         return Decision {
             score: board.evaluation(&player, &current_color),
@@ -77,18 +88,18 @@ pub fn minimax(board: &Board,
         let mut v = Decision { score: i32::MIN, pos: None };
         //println!(" (DEPTH = {}, POS = {:?}, (MAXIMAZING):", depth, prev_play);
         for pos in plays {
-            let child = board.play_at(Some(pos), &current_color);
-            if child.is_some() {
+            if let Move::Legal(child, _) = board.play_at(Some(pos), &current_color)
+            {
                 {
-                    let score = v.score;
-                    let decision = minimax(&child.unwrap(), depth - 1, alpha, beta, false, Some(pos), player);
+                    let decision = minimax(&child, depth - 1, alpha, beta, false, Some(pos), player, start);
+                    if decision.pos == None { return decision; }
                     //print!(" {},", decision.score);
                     v = cmp::max(v, decision);
                     alpha = cmp::max(alpha, v.score);
                 }
                 if alpha >= beta {
                     add_killer_move(v.pos, depth - 1);
-                    print!(" beta cutoff (beta {} <= {})", beta, v.score);
+                    //print!(" beta cutoff (beta {} <= {})", beta, v.score);
                     break ; // beta cut-off
                 }
             }
@@ -104,18 +115,17 @@ pub fn minimax(board: &Board,
         let mut v = Decision { score: i32::MAX, pos: None };
         //println!(" (DEPTH = {}, POS = {:?}, (MINIMIZING): ", depth, prev_play);
         for pos in plays {
-            let child = board.play_at(Some(pos), &current_color);
-            if child.is_some() {
+            if let Move::Legal(child, _) = board.play_at(Some(pos), &current_color) {
                 {
-                    let score = v.score;
-                    let decision = minimax(&child.unwrap(), depth - 1, alpha, beta, true, Some(pos), player);
+                    let decision = minimax(&child, depth - 1, alpha, beta, true, Some(pos), player, start);
+                    if decision.pos == None { return decision; }
                     //print!("{},", decision.score);
                     v = cmp::min(v, decision);
                     beta = cmp::min(beta, v.score);
                 }
                 if beta <= alpha {
                     add_killer_move(v.pos, depth);
-                    print!(" alpha cutoff ({} <= alpha {})", v.score, alpha);
+                    //print!(" alpha cutoff ({} <= alpha {})", v.score, alpha);
                     break ; // alpha cut-off
                 }
             }

@@ -1,8 +1,5 @@
 use board::board::Board;
 use board::square::Square;
-
-use std::time::{Duration, SystemTime};
-
 use std::cmp;
 
 impl Board
@@ -300,10 +297,10 @@ impl Board
             Square::Black => 'B', Square::White => 'W', Square::Empty => '-'
         };
 
-        let patterns = vec![("xxxxx", 5120), ("xxxx-", 1280), ("-xxxx", 1280),
+        let patterns = vec![("xxxxx", 10240), ("xxxx-", 1280), ("-xxxx", 1280),
         ("xxx-x", 1280), ("x-xxx", 1280), ("xx-xx", 1280), ("xxx--", 160),
         ("--xxx", 160), ("-xxx-", 160), ("-x-xx", 40), ("xx-x-", 40),
-        ("--xx-", 10), ("-xx--", 10)];
+        ("--xx-", 20), ("-xx--", 20)];
         let player_patterns = patterns.iter().map(|&(s, score)|
                                 (s.replace("x", match *color {
                                     Square::Black => "B",
@@ -346,7 +343,11 @@ impl Board
             t.append(&mut diagup);
             t.append(&mut diagdown);
         }
+<<<<<<< HEAD
         let capture_heuristic = |x| if x == 10 { 5120 } else { x * 15 };
+=======
+        let capture_heuristic = |x| if x == 10 { 500000 } else { x * 21 };
+>>>>>>> thomas
         t.iter().fold(0, |acc, s| 
                       acc + player_patterns.iter().chain(opponent_patterns.iter())
                       .fold(0, |acc, &(ref pattern, score)|

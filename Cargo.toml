@@ -17,3 +17,4 @@ unstable = [] # for travis-cargo
 [dependencies]
 itertools = "0.4"
 rand = "0.3"
+time = "*"

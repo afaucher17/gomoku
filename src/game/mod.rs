@@ -1,10 +1,13 @@
-use board::{Board, BoardState, Square};
+extern crate time;
+
+use board::{Board, BoardState, Move, Square};
 use minimax::minimax;
+
 use std::io;
 use std::i32;
-use std::time::{SystemTime};
+use self::time::PreciseTime;
 
-pub fn get_input() -> Option<(usize, usize)> {
+pub fn get_input_human() -> Option<(usize, usize)> {
     let mut parsed: Vec<Result<usize, _>>;
     loop {
         println!("Please state your play: X Y");
@@ -18,24 +21,38 @@ pub fn get_input() -> Option<(usize, usize)> {
     Some((parsed[0].clone().unwrap() - 1, parsed[1].clone().unwrap() - 1))
 }
 
+fn get_input_ia(board: &Board, player: &Square, now: PreciseTime) -> Option<(usize, usize)> {
+
+    let mut prev_value: Option<(usize, usize)> = None;
+    for depth in 1..13 {
+        let value = minimax(board, depth, i32::MIN, i32::MAX, true, None, player, now).pos;
+        if value == None { println!("Maximum depth in imparted time: {}", depth); break; }
+        else { prev_value = value; }
+    }
+    prev_value
+}
+
 pub fn game_loop(start: Board)
 {
-    let depth = 4;
     let mut player = Square::Black;
     let mut board = start;
+    println!("{}", board);
     loop {
-        let now = SystemTime::now();
+        let now = PreciseTime::now();
         let input = if player == Square::Black {
-            get_input()
+            get_input_human()
+            //get_input_ia(&board, &Square::Black, now)
         }
         else {
-            minimax(&board, depth, i32::MIN, i32::MAX, true,
-            None, &Square::White).pos
+            get_input_ia(&board, &Square::White, now)
         };
-        println!("{:?}", now.elapsed());
+        println!("Time since last move: {}", now.to(PreciseTime::now()));
         board = match board.play_at(input, &player) {
-            Some(a_board) => { player = player.opposite(); a_board },
-            None => { println!("illegal move, please try again"); board.clone() },
+            Move::Legal(a_board, (x, y)) => { println!("Last play at: X {}, Y {}", x + 1, y + 1); player = player.opposite(); a_board },
+            Move::Illegal => { println!("illegal move, please try again"); board.clone() },
+            Move::DoubleThrees => { println!("illegal move (double threes), please try again"); board.clone() },
+            Move::OutOfBounds => { println!("your move position must be between 1 and 19"); board.clone() },
+            Move::Other(message) => { println!("{}", message); board.clone() },
         };
         println!("{}", board);
         match board.game_state {
