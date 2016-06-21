@@ -38,6 +38,7 @@ pub fn game_loop(start: Board)
 {
     let mut player = Square::Black;
     let mut board = start;
+    Board::init_zobrist_array();
     let mut ttmap: HashMap<u64, TTEntry> = HashMap::new();
     println!("{}", board);
     loop {
