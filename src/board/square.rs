@@ -29,5 +29,23 @@ impl Square {
             Square::Empty => Square::Empty
         }
     }
+
+    pub fn to_char(&self) -> char
+    {
+        match *self {
+            Square::Black => 'B',
+            Square::White => 'W',
+            Square::Empty => '-',
+        }
+    }
+
+    pub fn to_str(&self) -> &'static str
+    {
+        match *self {
+            Square::Black => "B",
+            Square::White => "W",
+            Square::Empty => "-",
+        }
+    }
 }
 

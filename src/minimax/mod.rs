@@ -96,7 +96,6 @@ pub fn minimax(board: &Board,
         };
     }
 
-
     // Transition Table
     {
         let tte = ttmap.get(&board.hash);
@@ -141,13 +140,11 @@ pub fn minimax(board: &Board,
                 {
                     let decision = minimax(&child, depth - 1, alpha, beta, false, Some(pos), player, start, ttmap);
                     if decision.pos == None { return decision; }
-                    //print!(" {},", decision.score);
                     v = cmp::max(v, decision);
                     alpha = cmp::max(alpha, v.score);
                 }
                 if alpha >= beta {
                     add_killer_move(v.pos, depth - 1);
-                    //print!(" beta cutoff (beta {} <= {})", beta, v.score);
                     break ; // beta cut-off
                 }
             }
@@ -166,24 +163,20 @@ pub fn minimax(board: &Board,
             score: value,
             pos: if prev_play.is_none() { v.pos } else { prev_play },
         };
-        //println!(") => ({}, {:?})", v.score, decision.pos.unwrap());
         return decision;
     }
     else {
         let mut v = Decision { score: i32::MAX, pos: None };
-        //println!(" (DEPTH = {}, POS = {:?}, (MINIMIZING): ", depth, prev_play);
         for pos in plays {
             if let Move::Legal(child, _) = board.play_at(Some(pos), &current_color) {
                 {
                     let decision = minimax(&child, depth - 1, alpha, beta, true, Some(pos), player, start, ttmap);
                     if decision.pos == None { return decision; }
-                    //print!("{},", decision.score);
                     v = cmp::min(v, decision);
                     beta = cmp::min(beta, v.score);
                 }
                 if beta <= alpha {
                     add_killer_move(v.pos, depth);
-                    //print!(" alpha cutoff ({} <= alpha {})", v.score, alpha);
                     break ; // alpha cut-off
                 }
             }
@@ -202,7 +195,6 @@ pub fn minimax(board: &Board,
             score: v.score,
             pos: if prev_play.is_none() { v.pos } else { prev_play },
         };
-        //println!(") => ({}, {:?})", v.score, decision.pos.unwrap());
         return decision;
     }
 }

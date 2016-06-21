@@ -300,19 +300,23 @@ impl Board
         let patterns = vec![("xxxxx", 10240), ("xxxx-", 1280), ("-xxxx", 1280),
         ("xxx-x", 1280), ("x-xxx", 1280), ("xx-xx", 1280), ("xxx--", 160),
         ("--xxx", 160), ("-xxx-", 160), ("-x-xx", 40), ("xx-x-", 40),
-        ("--xx-", 20), ("-xx--", 20)];
+        ("--xx-", 10), ("-xx--", 10), ("yxx-", -80), ("-xxy", -80)];
         let player_patterns = patterns.iter().map(|&(s, score)|
-                                (s.replace("x", match *color {
-                                    Square::Black => "B",
-                                    Square::White => "W",
-                                    _ => " ",
-                                }), if *color != *current_color { (score as f64 * 1.0) as i32 } else { score })).collect::<Vec<_>>();
+                                (s.replace("x", color.to_str())
+                                 .replace("y", color.opposite().to_str()),
+                                 if *color != *current_color {
+                                     (score as f64 * 1.0) as i32
+                                 } else {
+                                     score
+                                 })).collect::<Vec<_>>();
         let opponent_patterns = patterns.iter().map(|&(s, score)|
-                                (s.replace("x", match color.opposite() {
-                                    Square::Black => "B",
-                                    Square::White => "W",
-                                    _ => " ",
-                                }), if color.opposite() != *current_color { (-score as f64 * 1.0) as i32 } else { -score })).collect::<Vec<_>>();
+                                (s.replace("x", color.opposite().to_str())
+                                 .replace("y", color.to_str()),
+                                 if color.opposite() != *current_color {
+                                     (-score as f64 * 1.0) as i32
+                                 } else {
+                                     -score
+                                 })).collect::<Vec<_>>();
         let mut t = Vec::new();
         {
             let mut vert = (0..19).map(|i| (0..19)
@@ -343,7 +347,7 @@ impl Board
             t.append(&mut diagup);
             t.append(&mut diagdown);
         }
-        let capture_heuristic = |x| if x == 10 { 500000 } else { x * 21 };
+        let capture_heuristic = |x| if x == 10 { 500000 } else { x * 11 };
         t.iter().fold(0, |acc, s| 
                       acc + player_patterns.iter().chain(opponent_patterns.iter())
                       .fold(0, |acc, &(ref pattern, score)|

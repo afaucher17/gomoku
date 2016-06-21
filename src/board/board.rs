@@ -18,6 +18,7 @@ pub struct Board
     pub hash: u64,
 }
 
+#[derive(Debug)]
 pub enum Move
 {
     Illegal,
@@ -27,7 +28,7 @@ pub enum Move
     Other(&'static str),
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum BoardState
 {
     InProgress,
@@ -57,14 +58,14 @@ impl fmt::Debug for Board
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
     {
-        write!(f, "{}Black Captures: {} White Captures: {}", self.state.iter()
+        write!(f, "{}Black Captures: {} White Captures: {}\nHash: {} GameState: {:?}", self.state.iter()
                .map(|line| line.iter()
                     .map(|square| match *square {
                         Square::Empty => "_",
                         Square::Black => "B",
                         Square::White => "W"
                     }).collect::<String>() + "\n"
-                   ).collect::<String>(), self.b_capture, self.w_capture)
+                   ).collect::<String>(), self.b_capture, self.w_capture, self.hash, self.game_state)
     }
 }
 
