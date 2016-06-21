@@ -24,42 +24,42 @@ impl Board
                 _ => ()
             };
             // East
-            if x + 4 < 19 {
+            if x + 3 < 19 {
                 capture(&(0..4).map(|i| (self.state[x + i][y].clone(),
                                 (x + i, y))).collect::<Vec<_>>())
             }
             // West
-            if x >= 4 { 
+            if x >= 3 { 
                 capture(&(0..4).map(|i| (self.state[x - i][y].clone(),
                                 (x - i, y))).collect::<Vec<_>>())
             }
             // South
-            if y + 4 < 19 { 
+            if y + 3 < 19 { 
                 capture(&(0..4).map(|i| (self.state[x][y + i].clone(),
                                 (x, y + i))).collect::<Vec<_>>())
             }
             // North
-            if y >= 4 { 
+            if y >= 3 { 
                 capture(&(0..4).map(|i| (self.state[x][y - i].clone(),
                                 (x, y - i))).collect::<Vec<_>>())
             }
             // North-East
-            if x + 4 < 19 && y + 4 < 19 {
+            if x + 3 < 19 && y + 3 < 19 {
                 capture(&(0..4).map(|i| (self.state[x + i][y + i].clone(),
                 (x + i, y + i))).collect::<Vec<_>>())
             }
             // North-West
-            if x + 4 < 19 && y >= 4 {
+            if x + 3 < 19 && y >= 3 {
                 capture(&(0..4).map(|i| (self.state[x + i][y - i].clone(),
                 (x + i, y - i))).collect::<Vec<_>>())
             }
             // South-East
-            if x >= 4 && y + 4 < 19 {
+            if x >= 3 && y + 3 < 19 {
                 capture(&(0..4).map(|i| (self.state[x - i][y + i].clone(),
                 (x - i, y + i))).collect::<Vec<_>>())
             }
             // South-West
-            if x >= 4 && y >= 4 {
+            if x >= 3 && y >= 3 {
                 capture(&(0..4).map(|i| (self.state[x - i][y - i].clone(),
                 (x - i, y - i))).collect::<Vec<_>>())
             }
@@ -305,7 +305,7 @@ impl Board
                                 (s.replace("x", color.to_str())
                                  .replace("y", color.opposite().to_str()),
                                  if *color != *current_color {
-                                     (score as f64 * 1.0) as i32
+                                     (score as f64 * 0.75) as i32
                                  } else {
                                      score
                                  })).collect::<Vec<_>>();
@@ -313,7 +313,7 @@ impl Board
                                 (s.replace("x", color.opposite().to_str())
                                  .replace("y", color.to_str()),
                                  if color.opposite() != *current_color {
-                                     (-score as f64 * 1.0) as i32
+                                     (-score as f64 * 0.75) as i32
                                  } else {
                                      -score
                                  })).collect::<Vec<_>>();
@@ -357,12 +357,12 @@ impl Board
                                 acc
                             }))
                             + if *color != *current_color { 
-                                (capture_heuristic(self.get_score(color)) as f64 * 1.0) as i32
+                                (capture_heuristic(self.get_score(color)) as f64 * 0.75) as i32
                             } else {
                                 capture_heuristic(self.get_score(color))
                             }
                             - if color.opposite() != *current_color {
-                                (capture_heuristic(self.get_score(&color.opposite())) as f64 * 1.0) as i32
+                                (capture_heuristic(self.get_score(&color.opposite())) as f64 * 0.75) as i32
                             } else {
                                 capture_heuristic(self.get_score(&color.opposite()))
                             }
