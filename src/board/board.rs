@@ -259,7 +259,7 @@ impl Board {
 
     pub fn get_plays(&self, color: &Square) -> Vec<(usize, usize)> {
         match self.game_state {
-            BoardState::FiveAligned(ref col) if *col == *color => self.check_capture_pos(color),
+            BoardState::FiveAligned(ref col) if *col == color.opposite() => self.check_capture_pos(color),
             _ => {
                 let mut plays = self.check_threats();
                 let mut check_capture = self.check_capture_pos(color);
