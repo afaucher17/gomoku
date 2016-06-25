@@ -1,6 +1,5 @@
-use board::board::Board;
+use board::board::{Board, Right};
 use board::square::Square;
-use std::cmp;
 
 impl Board
 {
@@ -22,11 +21,6 @@ impl Board
                         board.w_capture +=
                             if *color == Square::White { 2 } else { 0 };
                     };
-
-        struct Right {
-            data: String,
-            fun: Box<Fn(usize) -> (usize, usize)>,
-        }
 
             // East
             if x + 3 < 19 {
@@ -80,52 +74,7 @@ impl Board
         board.clone()
     }
 
-    fn five_aligned_capture(&self) -> Vec<(usize, usize)> {
-        let sq_to_char = |sq: &Square| match *sq {
-            Square::Black => 'B',
-            Square::White => 'W', Square::Empty => '-'
-        };
-
-        let p = vec![("BWW-", vec![1, 2]), ("-WWB", vec![1, 2]),
-        ("WBB-", vec![1, 2]), ("-BBW", vec![1, 2])];
-
-        struct Right {
-            data: String,
-            fun: Box<Fn(usize) -> (usize, usize)>,
-        }
-
-        let mut t: Vec<Right> = Vec::new();
-        {
-            let mut vert = (0..19).map(|i| Right { data: (0..19)
-                .map(|j| sq_to_char(&self.state[i][j]))
-                    .collect::<String>(),
-                    fun: Box::new(move |v| (i, v as usize)) }
-                    ).collect::<Vec<Right>>();
-            let mut hor = (0..19).map(|i| Right { data: (0..19)
-                .map(|j| sq_to_char(&self.state[j][i]))
-                    .collect::<String>(),
-                    fun: Box::new(move |v| (v as usize, i)) }
-                    ).collect::<Vec<Right>>();
-            let mut diagup = (0..37)
-                .map(|i| Right { data: (0..19 - (19 - (i as i32 + 1)).abs())
-                    .map(|j| sq_to_char(
-                            &self.state[(cmp::max(0, i - 18) + j) as usize][(cmp::max(0, 18 - i) + j) as usize]))
-                        .collect::<String>(), 
-                    fun: Box::new(move |v| (cmp::max(0, i as i32 - 18) as usize + v, cmp::max(0, 18 - i as i32) as usize + v))
-                }).collect::<Vec<Right>>();
-            let mut diagdown = (0..37)
-                .map(|i| Right { data: (0..19 - (19 - (i as i32 + 1)).abs())
-                    .map(|j| sq_to_char(
-                            &self.state[(cmp::max(0, i - 18) + j) as usize][(cmp::min(18, i) - j) as usize]))
-                        .collect::<String>(),
-                        fun: Box::new(move |v| (cmp::max(0, i as i32 - 18) as usize + v, cmp::min(18, i as i32) as usize - v))
-                }).collect::<Vec<Right>>();
-            t.append(&mut vert);
-            t.append(&mut hor);
-            t.append(&mut diagup);
-            t.append(&mut diagdown);
-        }
-
+    fn get_positions(p: Vec<(&'static str, Vec<usize>)>, t: Vec<Right>) -> Vec<(usize, usize)> {
         let mut pos = Vec::new();
         for right in t {
             for &(ref pattern, ref vec) in &p {
@@ -137,6 +86,53 @@ impl Board
             }
         }
         pos
+    }
+
+    pub fn check_threats(&self) -> Vec<(usize, usize)> {
+        let p = vec![("WWWW-", vec![4]), ("BBBB-", vec![4]),
+        ("WWWW-W", vec![3]), ("BBBB-B", vec![3]),
+        ("WW-WW", vec![2]), ("BB-BB", vec![2]),
+        ("W-WWW", vec![1]), ("B-BBB", vec![1]),
+        ("-WWWW", vec![0]), ("-BBBB", vec![0]),
+        ("--WWW", vec![1]), ("--BBB", vec![1]),
+        ("WWW--", vec![3]), ("BBB--", vec![3]),
+        ("-WWW-", vec![0, 4]), ("-BBB-", vec![0, 4]),
+        ("W-WW-", vec![1, 4]), ("B-BB-", vec![1, 4]),
+        ("-WW-W", vec![3, 0]), ("-BB-B", vec![3, 0])];
+
+        let t = self.explode();
+        Board::get_positions(p, t)
+    }
+
+    fn five_aligned_capture(&self) -> Vec<(usize, usize)> {
+        let p = vec![("BWW-", vec![1, 2]), ("-WWB", vec![1, 2]),
+        ("WBB-", vec![1, 2]), ("-BBW", vec![1, 2])];
+
+        let t = self.explode();
+        Board::get_positions(p, t)
+    }
+
+    pub fn check_capture_pos(&self, color: &Square) -> Vec<(usize, usize)>
+    {
+        let p = match *color { 
+            Square::Black => vec![("BWW-", vec![3]), ("-WWB", vec![0])],
+            Square::White => vec![("-BBW", vec![0]), ("WBB-", vec![3])],
+            Square::Empty => vec![],
+        };
+
+        let t = self.explode();
+        Board::get_positions(p, t)
+    }
+
+    pub fn check_aligned(&self, pos: (usize, usize), color: &Square) -> bool {
+        if self.five_aligned(pos, color) {
+            let mut test_board = self.clone();
+            let to_remove = self.five_aligned_capture();
+            to_remove.iter()
+                .fold(0, |acc, &(x, y)| { test_board.state[x][y] = Square::Empty; acc });
+            test_board.five_aligned(pos, color)
+        }
+        else { false }
     }
 
     fn rec_explo(&self, color: &Square, x: i32, y: i32,
@@ -164,152 +160,7 @@ impl Board
                 + self.rec_explo(color, x, y, -1, 1, 0)) > 4
     }
 
-    pub fn check_aligned(&self, pos: (usize, usize), color: &Square) -> bool {
-        if self.five_aligned(pos, color) {
-            let mut test_board = self.clone();
-            let to_remove = self.five_aligned_capture();
-            to_remove.iter()
-                .fold(0, |acc, &(x, y)| { test_board.state[x][y] = Square::Empty; acc });
-            test_board.five_aligned(pos, color)
-        }
-        else { false }
-    }
-
-    pub fn check_threats(&self) -> Vec<(usize, usize)> {
-        let sq_to_char = |sq: &Square| match *sq {
-            Square::Black => 'B',
-            Square::White => 'W', Square::Empty => '-'
-        };
-
-        let p = vec![("WWWW-", vec![4]), ("BBBB-", vec![4]),
-        ("WWWW-W", vec![3]), ("BBBB-B", vec![3]),
-        ("WW-WW", vec![2]), ("BB-BB", vec![2]),
-        ("W-WWW", vec![1]), ("B-BBB", vec![1]),
-        ("-WWWW", vec![0]), ("-BBBB", vec![0]),
-        ("--WWW", vec![1]), ("--BBB", vec![1]),
-        ("WWW--", vec![3]), ("BBB--", vec![3]),
-        ("-WWW-", vec![0, 4]), ("-BBB-", vec![0, 4]),
-        ("W-WW-", vec![1, 4]), ("B-BB-", vec![1, 4]),
-        ("-WW-W", vec![3, 0]), ("-BB-B", vec![3, 0])];
-
-        struct Right {
-            data: String,
-            fun: Box<Fn(usize) -> (usize, usize)>,
-        }
-
-        let mut t: Vec<Right> = Vec::new();
-        {
-            let mut vert = (0..19).map(|i| Right { data: (0..19)
-                .map(|j| sq_to_char(&self.state[i][j]))
-                    .collect::<String>(),
-                    fun: Box::new(move |v| (i, v as usize)) }
-                    ).collect::<Vec<Right>>();
-            let mut hor = (0..19).map(|i| Right { data: (0..19)
-                .map(|j| sq_to_char(&self.state[j][i]))
-                    .collect::<String>(),
-                    fun: Box::new(move |v| (v as usize, i)) } 
-                    ).collect::<Vec<Right>>();
-            let mut diagup = (0..37)
-                .map(|i| Right { data: (0..19 - (19 - (i as i32 + 1)).abs())
-                    .map(|j| sq_to_char(
-                            &self.state[(cmp::max(0, i - 18) + j) as usize][(cmp::max(0, 18 - i) + j) as usize]))
-                        .collect::<String>(), 
-                    fun: Box::new(move |v| (cmp::max(0, i as i32 - 18) as usize + v, cmp::max(0, 18 - i as i32) as usize + v))
-                }).collect::<Vec<Right>>();
-            let mut diagdown = (0..37)
-                .map(|i| Right { data: (0..19 - (19 - (i as i32 + 1)).abs())
-                    .map(|j| sq_to_char(
-                            &self.state[(cmp::max(0, i - 18) + j) as usize][(cmp::min(18, i) - j) as usize]))
-                        .collect::<String>(),
-                        fun: Box::new(move |v| (cmp::max(0, i as i32 - 18) as usize + v, cmp::min(18, i as i32) as usize - v))
-                }).collect::<Vec<Right>>();
-            t.append(&mut vert);
-            t.append(&mut hor);
-            t.append(&mut diagup);
-            t.append(&mut diagdown);
-        }
-
-        let mut pos = Vec::new();
-        for right in t {
-            for &(ref pattern, ref vec) in &p {
-                if let Some(offset) = right.data.find(pattern) {
-                    for i in vec {
-                        pos.push((right.fun)(i + offset));
-                    }
-                }
-            }
-        }
-        pos
-    }
-
-    pub fn check_capture_pos(&self, color: &Square) -> Vec<(usize, usize)>
-    {
-        let sq_to_char = |sq: &Square| match *sq {
-            Square::Black => 'B',
-            Square::White => 'W', Square::Empty => '-'
-        };
-
-        let p = match *color { 
-            Square::Black => vec![("BWW-", vec![3]), ("-WWB", vec![0])],
-            Square::White => vec![("-BBW", vec![0]), ("WBB-", vec![3])],
-            Square::Empty => vec![],
-        };
-
-        struct Right {
-            data: String,
-            fun: Box<Fn(usize) -> (usize, usize)>,
-        }
-
-        let mut t: Vec<Right> = Vec::new();
-        {
-            let mut vert = (0..19).map(|i| Right { data: (0..19)
-                .map(|j| sq_to_char(&self.state[i][j]))
-                    .collect::<String>(),
-                    fun: Box::new(move |v| (i, v as usize)) }
-                    ).collect::<Vec<Right>>();
-            let mut hor = (0..19).map(|i| Right { data: (0..19)
-                .map(|j| sq_to_char(&self.state[j][i]))
-                    .collect::<String>(),
-                    fun: Box::new(move |v| (v as usize, i)) } 
-                    ).collect::<Vec<Right>>();
-            let mut diagup = (0..37)
-                .map(|i| Right { data: (0..19 - (19 - (i as i32 + 1)).abs())
-                    .map(|j| sq_to_char(
-                            &self.state[(cmp::max(0, i - 18) + j) as usize][(cmp::max(0, 18 - i) + j) as usize]))
-                        .collect::<String>(), 
-                    fun: Box::new(move |v| (cmp::max(0, i as i32 - 18) as usize + v, cmp::max(0, 18 - i as i32) as usize + v))
-                }).collect::<Vec<Right>>();
-            let mut diagdown = (0..37)
-                .map(|i| Right { data: (0..19 - (19 - (i as i32 + 1)).abs())
-                    .map(|j| sq_to_char(
-                            &self.state[(cmp::max(0, i - 18) + j) as usize][(cmp::min(18, i) - j) as usize]))
-                        .collect::<String>(),
-                        fun: Box::new(move |v| (cmp::max(0, i as i32 - 18) as usize + v, cmp::min(18, i as i32) as usize - v))
-                }).collect::<Vec<Right>>();
-            t.append(&mut vert);
-            t.append(&mut hor);
-            t.append(&mut diagup);
-            t.append(&mut diagdown);
-        }
-
-        let mut pos = Vec::new();
-        for right in t {
-            for &(ref pattern, ref vec) in &p {
-                if let Some(offset) = right.data.find(pattern) {
-                    for i in vec {
-                        pos.push((right.fun)(i + offset));
-                    }
-                }
-            }
-        }
-        pos
-    }
-
     pub fn check_patterns(&self, color: &Square, current_color: &Square) -> i32 {
-        let sq_to_char = |sq: &Square| match *sq {
-            Square::Black => 'B', Square::White => 'W', Square::Empty => '-'
-        };
-
         let patterns = vec![("xxxxx", 10240), ("xxxx-", 1280), ("-xxxx", 1280),
         ("xxx-x", 1280), ("x-xxx", 1280), ("xx-xx", 1280), ("xxx--", 160),
         ("--xxx", 160), ("-xxx-", 160), ("-x-xx", 40), ("xx-x-", 40),
@@ -330,41 +181,13 @@ impl Board
                                                      } else {
                                                          -score
                                                      })).collect::<Vec<_>>();
-        let mut t = Vec::new();
-        {
-            let mut vert = (0..19).map(|i| (0..19)
-                                       .map(|j| sq_to_char(&self.state[i][j]))
-                                       .collect::<String>())
-                .collect::<Vec<_>>();
-            let mut hor = (0..19)
-                .map(|i| (0..19)
-                     .map(|j| sq_to_char(&self.state[j][i]))
-                     .collect::<String>())
-                .collect::<Vec<_>>();
-            let mut diagup = (0..38)
-                .map(|i: i32| (0..19)
-                     .filter(|j: &i32| (i - 19) + j < 19 && (i - 19) + j >= 0)
-                     .map(|j: i32| sq_to_char(
-                             &self.state[((i - 19) + j) as usize][j as usize]))
-                     .collect::<String>())
-                .collect::<Vec<_>>();
-            let mut diagdown = (0..38)
-                .map(|i: i32| (0..19)
-                     .filter(|j: &i32| (i - j) < 19 && (i - j) >= 0)
-                     .map(|j: i32| sq_to_char(
-                             &self.state[(i - j) as usize][j as usize]))
-                     .collect::<String>())
-                .collect::<Vec<_>>();
-            t.append(&mut vert);
-            t.append(&mut hor);
-            t.append(&mut diagup);
-            t.append(&mut diagdown);
-        }
+
+        let t = self.explode();
         let capture_heuristic = |x| if x == 10 { 500000 } else { x * 11 };
-        t.iter().fold(0, |acc, s| 
+        t.iter().fold(0, |acc, right| 
                       acc + player_patterns.iter().chain(opponent_patterns.iter())
                       .fold(0, |acc, &(ref pattern, score)|
-                            if s.find(pattern).is_some() {
+                            if right.data.find(pattern).is_some() {
                                 acc + score
                             } else {
                                 acc
