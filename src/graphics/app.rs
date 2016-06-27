@@ -23,7 +23,7 @@ impl App {
             .for_folder("assets")
             .unwrap();
 
-        let black_text = Texture::from_path(
+        let black_text: i32 = Texture::from_path(
             &mut window.factory,
             assets.join("black.png"),
             Flip::None,
