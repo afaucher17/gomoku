@@ -1,18 +1,24 @@
-extern crate piston_window;
-extern crate find_folder;
+use graphics::piston_window::*;
+use graphics::opengl_graphics::GlGraphics;
+use graphics::opengl_graphics::glyph_cache::GlyphCache;
+use graphics::graphics::math::Matrix2d;
 
-use piston_window::*;
-use opengl_graphics::GlGraphics;
-use opengl_graphics::glyph_cache::GlyphCache;
-use gomoku::board::{Board, Square};
+use graphics::find_folder;
+use graphics::gfx_device_gl;
+
+use std::collections::HashMap;
+use std::rc::Rc;
+
+use graphics::Settings;
+use board::{Board, Square};
 
 pub struct App {
-    settings: settings::Settings,
-    textures: HashMap<String, Texture>,
+    settings: Settings,
+    textures: HashMap<String, Texture<gfx_device_gl::Resource>>,
 }
 
 impl App {
-    pub fn new(settings: settings::Settings) -> App {
+    pub fn new(settings: Settings, window: &mut PistonWindow) -> App {
         let assets = find_folder::Search::ParentsThenKids(3, 3)
             .for_folder("assets")
             .unwrap();
@@ -42,7 +48,7 @@ impl App {
 
     pub fn on_render(self, args: &RenderArgs, gl: &mut GlGraphics, cache: &mut GlyphCache, board: &Board)
     {
-        gl.draw(&args.viewport(), |c, g| {
+        gl.draw(args.viewport(), |c, g| {
             clear(color::WHITE, g);
             let transform = c.transform.trans(40.0, 40.0);
             Rectangle::new([1.0, 0.91, 0.5, 1.0]).
@@ -61,11 +67,11 @@ impl App {
             transform,
             g
             );
-            self.draw_board(c.transform, board);
+            self.draw_board(c.transform, board, g);
         })
     }
 
-    fn draw_board(self, transform: Matrix2d, board: &Board)
+    fn draw_board<G: Graphics>(self, transform: Matrix2d, board: &Board, g: &mut G)
     {
         for i in 0..19
         {
@@ -73,8 +79,8 @@ impl App {
             {
                 let scale = transform.trans(27.5 + i as f64 * 40.0, 27.5 + j as f64 * 40.0).scale(0.1, 0.1);
                 match board.state[i][j] {
-                    Square::White => Image::new().draw(self.textures.get("white").unwrap_or(Texture::new()), &DrawState::default(), scale, g),
-                    Square::Black => Image::new().draw(self.textures.get("black").unwrap_or(Texture::new()), &DrawState::default(), scale, g),
+                    Square::White => Image::new().draw(self.textures.get("white").unwrap(), &DrawState::default(), scale, g),
+                    Square::Black => Image::new().draw(self.textures.get("black").unwrap(), &DrawState::default(), scale, g),
                     Square::Empty => (),
                 }
             }
