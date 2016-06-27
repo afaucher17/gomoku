@@ -4,6 +4,7 @@ extern crate rand;
 use board::square::Square;
 
 use std::fmt;
+use std::cmp;
 use self::itertools::Itertools;
 use self::rand::Rng;
 
@@ -35,6 +36,11 @@ pub enum BoardState
     Draw,
     Victory(Square),
     FiveAligned(Square),
+}
+
+pub struct Right {
+    pub data: String,
+    pub fun: Box<Fn(usize) -> (usize, usize)>,
 }
 
 static mut ZOBRIST_ARRAY: [[u64; 361]; 2] = [[0; 361]; 2];
@@ -99,6 +105,41 @@ impl Board {
             game_state: BoardState::InProgress,
             hash : 0,
         }
+    }
+
+    pub fn explode(&self) -> Vec<Right> {
+        let mut t: Vec<Right> = Vec::new();
+        {
+            let mut vert = (0..19).map(|i| Right { data: (0..19)
+                                       .map(|j| self.state[i][j].to_char())
+                                       .collect::<String>(),
+                                       fun: Box::new(move |v| (i, v as usize)) }
+                                       ).collect::<Vec<Right>>();
+            let mut hor = (0..19).map(|i| Right { data: (0..19)
+                                        .map(|j| self.state[j][i].to_char())
+                                        .collect::<String>(),
+                                        fun: Box::new(move |v| (v as usize, i)) } 
+                                        ).collect::<Vec<Right>>();
+            let mut diagup = (0..37)
+                .map(|i| Right { data: (0..19 - (19 - (i as i32 + 1)).abs())
+                    .map(|j| self.state[(cmp::max(0, i - 18) + j) as usize]
+                         [(cmp::max(0, 18 - i) + j) as usize].to_char())
+                    .collect::<String>(), 
+                    fun: Box::new(move |v| (cmp::max(0, i as i32 - 18) as usize + v, cmp::max(0, 18 - i as i32) as usize + v))
+                }).collect::<Vec<Right>>();
+            let mut diagdown = (0..37)
+                .map(|i| Right { data: (0..19 - (19 - (i as i32 + 1)).abs())
+                    .map(|j| self.state[(cmp::max(0, i - 18) + j) as usize]
+                         [(cmp::min(18, i) - j) as usize].to_char())
+                    .collect::<String>(),
+                    fun: Box::new(move |v| (cmp::max(0, i as i32 - 18) as usize + v, cmp::min(18, i as i32) as usize - v))
+                }).collect::<Vec<Right>>();
+            t.append(&mut vert);
+            t.append(&mut hor);
+            t.append(&mut diagup);
+            t.append(&mut diagdown);
+        }
+        t
     }
 
     pub fn init_zobrist_array() {
@@ -259,7 +300,7 @@ impl Board {
 
     pub fn get_plays(&self, color: &Square) -> Vec<(usize, usize)> {
         match self.game_state {
-            BoardState::FiveAligned(ref col) if *col == *color => self.check_capture_pos(color),
+            BoardState::FiveAligned(ref col) if *col == color.opposite() => self.check_capture_pos(color),
             _ => {
                 let mut plays = self.check_threats();
                 let mut check_capture = self.check_capture_pos(color);

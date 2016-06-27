@@ -2,7 +2,6 @@
 name = "gomoku"
 version = "0.1.0"
 authors = ["afaucher17 <aymeric.faucher@gmail.com>", "tdieumeg <tdieumeg@users.noreply.github.com>"]
-description = "Gomoku is an abstract strategy board game. Also called Gobang or Five in a Row, it is traditionally played with Go pieces (black and white stones) on a go board with 19x19 (15x15) intersections; however, because once placed, pieces are not moved or removed from the board; gomoku may also be played as a paper and pencil game. This game is known in several countries under different names. (Wikipedia)"
 documentation = "https://afaucher17.github.io/gomoku/gomoku"
 readme = "README.md"
 keywords = ["gomoku", "gobang"]
@@ -15,6 +14,8 @@ doc = false
 unstable = [] # for travis-cargo
 
 [dependencies]
+piston_window = "0.44.0"
+find_folder = "0.3.0"
 itertools = "0.4"
 rand = "0.3"
 time = "*"
