@@ -2,27 +2,25 @@ use graphics::piston_window::*;
 use graphics::opengl_graphics::GlGraphics;
 use graphics::opengl_graphics::glyph_cache::GlyphCache;
 use graphics::graphics::math::Matrix2d;
-
 use graphics::find_folder;
-use graphics::gfx_device_gl;
 
 use std::collections::HashMap;
-use std::rc::Rc;
+use graphics::gfx_core;
 
 use graphics::Settings;
 use board::{Board, Square};
 
-pub struct App {
+pub struct App<R: gfx_core::Resources> {
     settings: Settings,
-    textures: HashMap<String, Texture<gfx_device_gl::Resource>>,
+    black_text: Texture<R>,
+    white_text: Texture<R>,
 }
 
-impl App {
-    pub fn new(settings: Settings, window: &mut PistonWindow) -> App {
+impl<R: gfx_core::Resources> App<R> {
+    pub fn new(settings: Settings, window: &mut PistonWindow) -> Self {
         let assets = find_folder::Search::ParentsThenKids(3, 3)
             .for_folder("assets")
             .unwrap();
-
         let black_text = Texture::from_path(
             &mut window.factory,
             assets.join("black.png"),
