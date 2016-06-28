@@ -1,16 +1,18 @@
 use graphics::piston_window::*;
+use graphics::piston_window::ellipse::circle;
 use graphics::opengl_graphics::GlGraphics;
 use graphics::opengl_graphics::glyph_cache::GlyphCache;
 use graphics::graphics::math::Matrix2d;
 use graphics::gfx_device_gl::{Resources};
+use graphics::find_folder;
 
 use graphics::Settings;
 use board::{Board, Square};
 
 pub struct App {
     settings: Settings,
-    black_text: Option<Texture<Resources>>,
-    white_text: Option<Texture<Resources>>,
+    black_text: Option<usize>,//Texture<Resources>>,
+    white_text: Option<usize>,//Texture<Resources>>,
 }
 
 impl App {
@@ -18,18 +20,20 @@ impl App {
         let assets = find_folder::Search::ParentsThenKids(3, 3)
             .for_folder("assets")
             .unwrap();
+        let black_text = assets.join("black.png");
         let black_text = Texture::from_path(
             &mut window.factory,
-            assets.join("black.png"),
+            &black_text,
             Flip::None,
-            &TextureSettings::new()
-            ).unwrap();
+            &TextureSettings::new())
+            .unwrap();
+        let white_text = assets.join("white.png");
         let white_text = Texture::from_path(
             &mut window.factory,
-            assets.join("white.png"),
+            &white_text,
             Flip::None,
-            &TextureSettings::new()
-            ).unwrap();
+            &TextureSettings::new())
+            .unwrap();
 
         App {
             settings: settings,
@@ -38,7 +42,7 @@ impl App {
         }
     }
 
-    pub fn on_render(self, args: &RenderArgs, gl: &mut GlGraphics, cache: &mut GlyphCache, board: &Board)
+    pub fn on_render(&self, args: &RenderArgs, gl: &mut GlGraphics, board: &Board)
     {
         gl.draw(args.viewport(), |c, g| {
             clear(color::WHITE, g);
@@ -63,7 +67,7 @@ impl App {
         })
     }
 
-    fn draw_board<G: Graphics>(self, transform: Matrix2d, board: &Board, g: &mut G)
+    fn draw_board<G: Graphics>(&self, transform: Matrix2d, board: &Board, g: &mut G)
     {
         for i in 0..19
         {
@@ -71,8 +75,8 @@ impl App {
             {
                 let scale = transform.trans(27.5 + i as f64 * 40.0, 27.5 + j as f64 * 40.0).scale(0.1, 0.1);
                 match board.state[i][j] {
-                    Square::White => Image::new().draw(self.white_text.unwrap(), &DrawState::default(), scale, g),
-                    Square::Black => Image::new().draw(self.black_text.unwrap(), &DrawState::default(), scale, g),
+                    Square::White => Ellipse::new([1.0, 1.0, 1.0, 1.0]).draw(circle(i as f64, j as f64, 3.0), &DrawState::default(), scale, g),
+                    Square::Black => Ellipse::new([0.0, 0.0, 0.0, 1.0]).draw(circle(i as f64, j as f64, 3.0), &DrawState::default(), scale, g),
                     Square::Empty => (),
                 }
             }

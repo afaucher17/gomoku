@@ -3,6 +3,7 @@ extern crate graphics;
 extern crate piston_window;
 extern crate find_folder;
 extern crate gfx_core;
+extern crate gfx_device_gl;
 
 mod app;
 mod settings;
