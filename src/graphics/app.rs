@@ -9,13 +9,13 @@ use graphics::find_folder;
 use graphics::Settings;
 use board::{Board, Square};
 
-pub struct App {
+pub struct App<T> where T : ImageSize {
     settings: Settings,
     black_text: Option<usize>,//Texture<Resources>>,
     white_text: Option<usize>,//Texture<Resources>>,
 }
 
-impl App {
+impl<T: ImageSize> App<T> {
     pub fn new(settings: Settings, window: &mut PistonWindow) -> Self {
         let assets = find_folder::Search::ParentsThenKids(3, 3)
             .for_folder("assets")
