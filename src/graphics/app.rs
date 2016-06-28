@@ -14,11 +14,10 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(settings: Settings, window: &mut PistonWindow) -> App {
+    pub fn new(settings: Settings, window: &mut PistonWindow) -> Self {
         let assets = find_folder::Search::ParentsThenKids(3, 3)
             .for_folder("assets")
             .unwrap();
-
         let black_text = Texture::from_path(
             &mut window.factory,
             assets.join("black.png"),
