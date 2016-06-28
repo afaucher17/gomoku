@@ -2,18 +2,18 @@ use graphics::piston_window::*;
 use graphics::opengl_graphics::GlGraphics;
 use graphics::opengl_graphics::glyph_cache::GlyphCache;
 use graphics::graphics::math::Matrix2d;
-use graphics::gfx_device_gl::{Resources};
+use graphics::gfx;
 
 use graphics::Settings;
 use board::{Board, Square};
 
-pub struct App {
+pub struct App<T> where T : ImageSize {
     settings: Settings,
-    black_text: Option<Texture<Resources>>,
-    white_text: Option<Texture<Resources>>,
+    black_text: Option<T>,
+    white_text: Option<T>,
 }
 
-impl App {
+impl<T: ImageSize> App<T> {
     pub fn new(settings: Settings, window: &mut PistonWindow) -> Self {
         let assets = find_folder::Search::ParentsThenKids(3, 3)
             .for_folder("assets")
@@ -63,7 +63,7 @@ impl App {
         })
     }
 
-    fn draw_board<G: Graphics>(self, transform: Matrix2d, board: &Board, g: &mut G)
+    fn draw_board<G>(self, transform: Matrix2d, board: &Board, g: &mut G) where G: Graphics<Texture = T>
     {
         for i in 0..19
         {
@@ -71,8 +71,8 @@ impl App {
             {
                 let scale = transform.trans(27.5 + i as f64 * 40.0, 27.5 + j as f64 * 40.0).scale(0.1, 0.1);
                 match board.state[i][j] {
-                    Square::White => Image::new().draw(self.white_text.unwrap(), &DrawState::default(), scale, g),
-                    Square::Black => Image::new().draw(self.black_text.unwrap(), &DrawState::default(), scale, g),
+                    Square::White => Image::new().draw(&self.white_text.unwrap(), &DrawState::default(), scale, g),
+                    Square::Black => Image::new().draw(&self.black_text.unwrap(), &DrawState::default(), scale, g),
                     Square::Empty => (),
                 }
             }
