@@ -2,19 +2,15 @@ use graphics::piston_window::*;
 use graphics::opengl_graphics::GlGraphics;
 use graphics::opengl_graphics::glyph_cache::GlyphCache;
 use graphics::graphics::math::Matrix2d;
-
-use graphics::find_folder;
-use graphics::gfx_device_gl;
-
-use std::collections::HashMap;
-use std::rc::Rc;
+use graphics::gfx_device_gl::{Resources};
 
 use graphics::Settings;
 use board::{Board, Square};
 
 pub struct App {
     settings: Settings,
-    textures: HashMap<String, Texture<gfx_device_gl::Resource>>,
+    black_text: Option<Texture<Resources>>,
+    white_text: Option<Texture<Resources>>,
 }
 
 impl App {
@@ -23,7 +19,7 @@ impl App {
             .for_folder("assets")
             .unwrap();
 
-        let black_text: i32 = Texture::from_path(
+        let black_text = Texture::from_path(
             &mut window.factory,
             assets.join("black.png"),
             Flip::None,
@@ -36,13 +32,10 @@ impl App {
             &TextureSettings::new()
             ).unwrap();
 
-        let mut textures = HashMap::new();
-        textures.insert("black", black_text);
-        textures.insert("white", white_text);
-
         App {
             settings: settings,
-            textures: textures,
+            black_text: None,
+            white_text: None,
         }
     }
 
@@ -79,8 +72,8 @@ impl App {
             {
                 let scale = transform.trans(27.5 + i as f64 * 40.0, 27.5 + j as f64 * 40.0).scale(0.1, 0.1);
                 match board.state[i][j] {
-                    Square::White => Image::new().draw(self.textures.get("white").unwrap(), &DrawState::default(), scale, g),
-                    Square::Black => Image::new().draw(self.textures.get("black").unwrap(), &DrawState::default(), scale, g),
+                    Square::White => Image::new().draw(self.white_text.unwrap(), &DrawState::default(), scale, g),
+                    Square::Black => Image::new().draw(self.black_text.unwrap(), &DrawState::default(), scale, g),
                     Square::Empty => (),
                 }
             }
