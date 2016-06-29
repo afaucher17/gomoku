@@ -9,13 +9,13 @@ use graphics::find_folder;
 use graphics::Settings;
 use board::{Board, Square};
 
-pub struct App<T> where T : ImageSize {
+pub struct App {
     settings: Settings,
     black_text: Option<usize>,//Texture<Resources>>,
     white_text: Option<usize>,//Texture<Resources>>,
 }
 
-impl<T: ImageSize> App<T> {
+impl App {
     pub fn new(settings: Settings, window: &mut PistonWindow) -> Self {
         let assets = find_folder::Search::ParentsThenKids(3, 3)
             .for_folder("assets")
@@ -42,9 +42,9 @@ impl<T: ImageSize> App<T> {
         }
     }
 
-    pub fn on_render(&self, args: &RenderArgs, gl: &mut GlGraphics, board: &Board)
+    pub fn on_render(&self, e: &Event, win: &mut PistonWindow, board: &Board)
     {
-        gl.draw(args.viewport(), |c, g| {
+        win.draw_2d(e, |c, g| {
             clear(color::WHITE, g);
             let transform = c.transform.trans(40.0, 40.0);
             Rectangle::new([1.0, 0.91, 0.5, 1.0]).
@@ -64,7 +64,7 @@ impl<T: ImageSize> App<T> {
             g
             );
             self.draw_board(c.transform, board, g);
-        })
+        });
     }
 
     fn draw_board<G: Graphics>(&self, transform: Matrix2d, board: &Board, g: &mut G)
@@ -73,10 +73,10 @@ impl<T: ImageSize> App<T> {
         {
             for j in 0..19
             {
-                let scale = transform.trans(27.5 + i as f64 * 40.0, 27.5 + j as f64 * 40.0).scale(0.1, 0.1);
+                let scale = transform.trans(40.0 + i as f64 * 40.0, 40.0 + j as f64 * 40.0).scale(0.1, 0.1);
                 match board.state[i][j] {
-                    Square::White => Ellipse::new([1.0, 1.0, 1.0, 1.0]).draw(circle(i as f64, j as f64, 3.0), &DrawState::default(), scale, g),
-                    Square::Black => Ellipse::new([0.0, 0.0, 0.0, 1.0]).draw(circle(i as f64, j as f64, 3.0), &DrawState::default(), scale, g),
+                    Square::White => Ellipse::new([1.0, 1.0, 1.0, 1.0]).draw(circle(0.0, 0.0, 100.0), &DrawState::default(), scale, g),
+                    Square::Black => Ellipse::new([0.0, 0.0, 0.0, 1.0]).draw(circle(0.0, 0.0, 100.0), &DrawState::default(), scale, g),
                     Square::Empty => (),
                 }
             }

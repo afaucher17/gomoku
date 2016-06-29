@@ -11,15 +11,14 @@ use gomoku::board::{Board, Square};
 use gomoku::graphics::{Settings, App};
 
 fn main() {
-    let opengl = OpenGL::V3_2;
     let settings = Settings::new();
+    let opengl = OpenGL::V3_2; 
     let mut window: PistonWindow =
         WindowSettings::new("Gomoku", [settings.win_size.x as u32, settings.win_size.y as u32])
         .exit_on_esc(true)
         .opengl(opengl)
         .build()
         .unwrap();
-
     let app = App::new(settings, &mut window);
 
     let board = Board::from(concat!(
@@ -42,12 +41,11 @@ fn main() {
             "___________________\n",
             "___________________\n",
             "___________________"));
-    let ref mut gl = GlGraphics::new(opengl);
 
-    let mut events = window.events();
-    while let Some(e) = events.next(&mut window) {
-        if let Some(args) = e.render_args() {
-            app.on_render(&args, gl, &board);
+    while let Some(e) = window.next() {
+        match e {
+            Event::Render(_) => app.on_render(&e, &mut window, &board),
+            _ => ()
         }
     }
 }
