@@ -9,6 +9,7 @@ use opengl_graphics::GlGraphics;
 use opengl_graphics::glyph_cache::GlyphCache;
 use gomoku::board::{Board, Square};
 use gomoku::graphics::{Settings, App};
+use std::sync::mpsc;
 
 fn main() {
     let settings = Settings::new();
@@ -42,10 +43,18 @@ fn main() {
             "___________________\n",
             "___________________"));
 
+    let (tx, rx) = mpsc::channel();
+
     while let Some(e) = window.next() {
         match e {
             Event::Render(_) => app.on_render(&e, &mut window, &board),
             _ => ()
+        }
+        if let Some(button) = e.press_args() {
+            if button == Button::Mouse(MouseButton::Left) {
+                // I get the board position from app, I get none if the user click is not in the
+                // board
+            }
         }
     }
 }
