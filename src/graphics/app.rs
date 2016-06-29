@@ -1,48 +1,50 @@
-extern crate piston_window;
-extern crate find_folder;
+use graphics::piston_window::*;
+use graphics::piston_window::ellipse::circle;
+use graphics::opengl_graphics::GlGraphics;
+use graphics::opengl_graphics::glyph_cache::GlyphCache;
+use graphics::graphics::math::Matrix2d;
+use graphics::gfx_device_gl::{Resources};
+use graphics::find_folder;
 
-use piston_window::*;
-use opengl_graphics::GlGraphics;
-use opengl_graphics::glyph_cache::GlyphCache;
-use gomoku::board::{Board, Square};
+use graphics::Settings;
+use board::{Board, Square};
 
-pub struct App {
-    settings: settings::Settings,
-    textures: HashMap<String, Texture>,
+pub struct App<T> where T : ImageSize {
+    settings: Settings,
+    black_text: Option<usize>,//Texture<Resources>>,
+    white_text: Option<usize>,//Texture<Resources>>,
 }
 
-impl App {
-    pub fn new(settings: settings::Settings) -> App {
+impl<T: ImageSize> App<T> {
+    pub fn new(settings: Settings, window: &mut PistonWindow) -> Self {
         let assets = find_folder::Search::ParentsThenKids(3, 3)
             .for_folder("assets")
             .unwrap();
-
+        let black_text = assets.join("black.png");
         let black_text = Texture::from_path(
             &mut window.factory,
-            assets.join("black.png"),
+            &black_text,
             Flip::None,
-            &TextureSettings::new()
-            ).unwrap();
+            &TextureSettings::new())
+            .unwrap();
+        let white_text = assets.join("white.png");
         let white_text = Texture::from_path(
             &mut window.factory,
-            assets.join("white.png"),
+            &white_text,
             Flip::None,
-            &TextureSettings::new()
-            ).unwrap();
-
-        let mut textures = HashMap::new();
-        textures.insert("black", black_text);
-        textures.insert("white", white_text);
+            &TextureSettings::new())
+            .unwrap();
 
         App {
             settings: settings,
-            textures: textures,
+            black_text: None,
+            white_text: None,
         }
     }
 
-    pub fn on_render(self, args: &RenderArgs, gl: &mut GlGraphics, cache: &mut GlyphCache, board: &Board)
+    pub fn on_render(&self, args: &RenderArgs, gl: &mut GlGraphics, board: &Board)
     {
-        gl.draw(&args.viewport(), |c, g| {
+        gl.draw(args.viewport(), |c, g| {
             clear(color::WHITE, g);
             let transform = c.transform.trans(40.0, 40.0);
             Rectangle::new([1.0, 0.91, 0.5, 1.0]).
@@ -61,11 +63,11 @@ impl App {
             transform,
             g
             );
-            self.draw_board(c.transform, board);
+            self.draw_board(c.transform, board, g);
         })
     }
 
-    fn draw_board(self, transform: Matrix2d, board: &Board)
+    fn draw_board<G: Graphics>(&self, transform: Matrix2d, board: &Board, g: &mut G)
     {
         for i in 0..19
         {
@@ -73,8 +75,8 @@ impl App {
             {
                 let scale = transform.trans(27.5 + i as f64 * 40.0, 27.5 + j as f64 * 40.0).scale(0.1, 0.1);
                 match board.state[i][j] {
-                    Square::White => Image::new().draw(self.textures.get("white").unwrap_or(Texture::new()), &DrawState::default(), scale, g),
-                    Square::Black => Image::new().draw(self.textures.get("black").unwrap_or(Texture::new()), &DrawState::default(), scale, g),
+                    Square::White => Ellipse::new([1.0, 1.0, 1.0, 1.0]).draw(circle(i as f64, j as f64, 3.0), &DrawState::default(), scale, g),
+                    Square::Black => Ellipse::new([0.0, 0.0, 0.0, 1.0]).draw(circle(i as f64, j as f64, 3.0), &DrawState::default(), scale, g),
                     Square::Empty => (),
                 }
             }

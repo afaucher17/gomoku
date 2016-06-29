@@ -2,6 +2,7 @@
 extern crate gomoku;
 extern crate piston_window;
 extern crate find_folder;
+extern crate opengl_graphics;
 
 use piston_window::*;
 use opengl_graphics::GlGraphics;
@@ -11,7 +12,7 @@ use gomoku::graphics::{Settings, App};
 
 fn main() {
     let opengl = OpenGL::V3_2;
-    let settings = Settings:new();
+    let settings = Settings::new();
     let mut window: PistonWindow =
         WindowSettings::new("Gomoku", [settings.win_size.x as u32, settings.win_size.y as u32])
         .exit_on_esc(true)
@@ -19,7 +20,7 @@ fn main() {
         .build()
         .unwrap();
 
-    let app = App::new();
+    let app = App::new(settings, &mut window);
 
     let board = Board::from(concat!(
             "___________________\n",
@@ -42,12 +43,11 @@ fn main() {
             "___________________\n",
             "___________________"));
     let ref mut gl = GlGraphics::new(opengl);
-    let ref mut cache = GlyphCache::new(font_path).unwrap();
 
-    let events = window.events();
+    let mut events = window.events();
     while let Some(e) = events.next(&mut window) {
         if let Some(args) = e.render_args() {
-            app.on_render(&args, gl, cache);
+            app.on_render(&args, gl, &board);
         }
     }
 }
