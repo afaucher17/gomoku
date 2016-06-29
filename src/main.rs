@@ -42,9 +42,12 @@ fn main() {
             "___________________\n",
             "___________________"));
 
+    let mut mouse_pos: [f64; 2] = [0.0; 2];
     while let Some(e) = window.next() {
         match e {
             Event::Render(_) => app.on_render(&e, &mut window, &board),
+            Event::Input(Input::Release(Button::Mouse(Left))) => app.on_click(&board, &mouse_pos),
+            Event::Input(Input::Move(Motion::MouseCursor(_, _))) => mouse_pos = e.mouse_cursor_args().unwrap(),
             _ => ()
         }
     }

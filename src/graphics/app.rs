@@ -67,6 +67,22 @@ impl App {
         });
     }
 
+    pub fn on_click(&self, board: &Board, mouse_pos: &[f64; 2]) {
+
+        let mut pos: Option<(usize, usize)>;
+        let mut x = mouse_pos[0] - 40.0;
+        if x < 0.0 { x = 0.5 } else { x = x / 40.0 }
+        let mut y = mouse_pos[1] - 40.0;
+        if y < 0.0 { y = 0.5 } else { y = y / 40.0 }
+        if (x.fract() < 0.3 || x.fract() > 0.7) && (y.fract() < 0.3 || y.fract() > 0.7) {
+            pos = Some((x.round() as usize, y.round() as usize));
+        }
+        else { pos = None }
+        println!("{:?}", pos);
+
+        //(pos[0] as usize, pos[1] as usize)
+    }
+
     fn draw_board<G: Graphics>(&self, transform: Matrix2d, board: &Board, g: &mut G)
     {
         for i in 0..19
