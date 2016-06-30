@@ -16,7 +16,6 @@ unstable = [] # for travis-cargo
 [dependencies]
 piston_window = "0.44.0"
 gfx_core = "*"
-gfx_text = "*"
 gfx_device_gl = "*"
 find_folder = "0.3.0"
 itertools = "0.4"

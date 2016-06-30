@@ -15,7 +15,6 @@ use self::rand::{Rng};
 
 pub struct Game {
     pub board: Board,
-    pub board_state: BoardState,
     players: Vec<Player>,
     pub current_player: Player,
     pub last_move: Option<Move>,
@@ -68,7 +67,6 @@ impl Game {
                            "-------------------\n",
                            "-------------------\n",
                            "-------------------\n")),*/
-            board_state: BoardState::InProgress,
             players: vec![player_1.clone(), player_2.clone()],
             current_player: if toss == 0 { player_1 } else { player_2 },
             last_move: None,
@@ -131,7 +129,6 @@ impl Game {
                     println!("{:?}", self.current_player);
                 }
                 self.board = board.clone();
-                self.board_state = board.game_state;
                 self.last_move = Some(player_move);
                 self.current_player = if self.current_player == self.players[0]
                 {
