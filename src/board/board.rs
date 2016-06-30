@@ -1,12 +1,15 @@
 extern crate itertools;
 extern crate rand;
+extern crate time;
 
 use board::square::Square;
+use game::Player;
 
 use std::fmt;
 use std::cmp;
 use self::itertools::Itertools;
 use self::rand::Rng;
+use self::time::{PreciseTime, Duration};
 
 #[derive(Clone)]
 #[derive(PartialEq)]
@@ -24,7 +27,7 @@ pub enum Move
 {
     Illegal,
     DoubleThrees,
-    Legal(Board, (usize, usize)),
+    Legal(Board, (usize, usize), Square, Duration),
     OutOfBounds,
     Other(&'static str),
 }
@@ -196,7 +199,7 @@ impl Board {
         }
     }
 
-    pub fn play_at(&self, pos: Option<(usize, usize)>, color: &Square) -> Move {
+    pub fn play_at(&self, pos: Option<(usize, usize)>, color: &Square, now: PreciseTime) -> Move {
         match pos {
             Some((x, y)) => {
                 let mut clone = self.clone();
@@ -212,7 +215,7 @@ impl Board {
                         clone = clone.check_capture(color, (x, y));
                         clone.game_state = clone.get_game_state(pos.unwrap(), color);
                         clone.add_move(pos.unwrap(), color);
-                        Move::Legal(clone, (x, y))
+                        Move::Legal(clone, (x, y), color.clone(), now.to(PreciseTime::now()))
                     }
                     else { Move::DoubleThrees }
                 }

@@ -1,17 +1,17 @@
-extern crate time;
 extern crate rand;
+extern crate time;
 
 use board::{Board, BoardState, Move, Square};
 use minimax::TTEntry;
 use minimax::minimax;
 
 use std::i32;
-use self::time::PreciseTime;
 use std::collections::HashMap;
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver};
 use std::thread;
 use self::rand::{Rng};
+use self::time::PreciseTime;
 
 pub struct Game {
     pub board: Board,
@@ -25,6 +25,7 @@ pub struct Game {
 struct AIDecision {
     pos: Option<(usize, usize)>,
     map: HashMap<u64, TTEntry>,
+    start: PreciseTime,
 }
 
 #[derive(PartialEq, Clone, Debug)]
@@ -47,26 +48,7 @@ impl Game {
             is_ai: false,
         };
         let mut game = Game {
-            board: Board::new(),/*Board::from(concat!(
-                           "BBWBBBW------------\n",
-                           "BWWBWB-------------\n",
-                           "BBB-WB-------------\n",
-                           "BB-W---------------\n",
-                           "WBW-B-W------------\n",
-                           "-W---B-W-----------\n",
-                           "B-------B----------\n",
-                           "-------------------\n",
-                           "-------------------\n",
-                           "-------------------\n",
-                           "-------------------\n",
-                           "-------------------\n",
-                           "-------------------\n",
-                           "-------------------\n",
-                           "-------------------\n",
-                           "-------------------\n",
-                           "-------------------\n",
-                           "-------------------\n",
-                           "-------------------\n")),*/
+            board: Board::new(),
             players: vec![player_1.clone(), player_2.clone()],
             current_player: if toss == 0 { player_1 } else { player_2 },
             last_move: None,
@@ -79,8 +61,7 @@ impl Game {
         game
     }
 
-    fn get_input_ai(board: &Board, player: &Square, ttmap: &mut HashMap<u64, TTEntry>) -> Option<(usize, usize)> {
-        let now = PreciseTime::now();
+    fn get_input_ai(board: &Board, player: &Square, ttmap: &mut HashMap<u64, TTEntry>, now: PreciseTime) -> Option<(usize, usize)> {
         let mut prev_value: Option<(usize, usize)> = None;
         for depth in 1..13 {
             let value = minimax(board, depth, i32::MIN, i32::MAX, true, None, player, now, ttmap).pos;
@@ -97,7 +78,7 @@ impl Game {
         if let Some(ref receiver) = self.receiver {
             if let Ok(decision) = receiver.try_recv() {
                 received = true;
-                player_move = self.board.play_at(decision.pos, &self.current_player.color);
+                player_move = self.board.play_at(decision.pos, &self.current_player.color, decision.start);
                 self.map = decision.map.clone();
             }
         }
@@ -115,19 +96,16 @@ impl Game {
         let mut map = self.map.clone();
         let color = self.current_player.color.clone();
         thread::spawn(move || {
-            let pos = Game::get_input_ai(&board, &color, &mut map);
-            println!("{:?}", pos);
-            tx.send(AIDecision { pos: pos, map: map }).unwrap();
+            let now = PreciseTime::now();
+            let pos = Game::get_input_ai(&board, &color, &mut map, now);
+            tx.send(AIDecision { pos: pos, map: map, start: now }).unwrap();
         });
     }
 
     pub fn apply_move(&mut self, player_move: Move)
     {
         match player_move.clone() {
-            Move::Legal(board, _) => {
-                {
-                    println!("{:?}", self.current_player);
-                }
+            Move::Legal(board, _, _, _) => {
                 self.board = board.clone();
                 self.last_move = Some(player_move);
                 self.current_player = if self.current_player == self.players[0]
@@ -151,7 +129,7 @@ impl Game {
     pub fn play(&mut self, pos: Option<(usize, usize)>)
     {
         if !self.current_player.is_ai && pos != None {
-            let player_move = self.board.play_at(pos, &self.current_player.color);
+            let player_move = self.board.play_at(pos, &self.current_player.color, PreciseTime::now());
             self.apply_move(player_move);
         }
     }
