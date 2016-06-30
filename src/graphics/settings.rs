@@ -12,7 +12,7 @@ pub struct Settings {
 impl Settings {
     pub fn new() -> Settings {
         Settings {
-            win_size: Vec2f { x: 1200.0, y: 840.0 },
+            win_size: Vec2f { x: 1300.0, y: 840.0 },
             cell_size: 40.0,
             board_margin: Vec2f { x: 40.0, y: 40.0 },
         }

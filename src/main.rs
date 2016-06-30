@@ -6,7 +6,6 @@ extern crate opengl_graphics;
 
 use piston_window::*;
 use gomoku::game::{Game};
-use gomoku::board::{BoardState};
 use gomoku::graphics::{Settings, App};
 
 fn main() {
@@ -23,7 +22,7 @@ fn main() {
     let mut mouse_pos: [f64; 2] = [0.0; 2];
     while let Some(e) = window.next() {
         match e {
-            Event::Render(_) => app.on_render(&e, &mut window, &game.board),
+            Event::Render(_) => app.on_render(&e, &mut window, &game),
             Event::Input(Input::Release(Button::Mouse(MouseButton::Left))) => {
                 let mut pos = None;
                 {
