@@ -220,7 +220,7 @@ impl Board {
                     else { Move::DoubleThrees }
                 }
             },
-            None => Move::Other("Unknown position."),
+            None => Move::Other(""),
         }
     }
 

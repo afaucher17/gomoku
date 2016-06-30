@@ -102,13 +102,21 @@ impl App {
                 let last_move = match game.last_move {
                     Some(Move::Illegal) => "Illegal move".to_string(),
                     Some(Move::DoubleThrees) => "Double Three move".to_string(),
-                    Some(Move::Legal(_, (x, y))) => format!("{} ({}, {})", "Last move:", x.to_string(), y.to_string()),
+                    Some(Move::Legal(_, (x, y), ref color, _)) => format!("{} {} at ({}, {})", "Last move:", color, x.to_string(), y.to_string()),
                     Some(Move::OutOfBounds) => "OutOfBounds should never happen".to_string(),
                     Some(Move::Other(message)) => message.to_string(),
                     _ => "No moves yet".to_string()
                 };
                 text::Text::new_color([0.0, 0.0, 0.0, 1.0], 32)
                     .draw(last_move.as_str(), &mut glyphs, &c.draw_state, last_trans, g);
+            }
+            {
+                let time_trans = c.transform.trans(880.0, 200.0);
+                if let Some(Move::Legal(_, _, _, time)) = game.last_move {
+                    let time_text = format!("Last move duration: {:.2}", time.num_milliseconds() as f64 / 1000.0);
+                    text::Text::new_color([0.0, 0.0, 0.0, 1.0], 32)
+                        .draw(time_text.as_str(), &mut glyphs, &c.draw_state, time_trans, g);
+                }
             }
         });
     }

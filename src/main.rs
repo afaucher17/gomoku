@@ -5,6 +5,7 @@ extern crate find_folder;
 extern crate opengl_graphics;
 
 use piston_window::*;
+use gomoku::board::{BoardState};
 use gomoku::game::{Game};
 use gomoku::graphics::{Settings, App};
 
@@ -28,7 +29,10 @@ fn main() {
                 {
                     pos = app.on_click(&mouse_pos);
                 }
-                game.play(pos);
+                match game.board.game_state {
+                    BoardState::InProgress | BoardState::FiveAligned(_) => game.play(pos),
+                    _ => ()
+                }
             },
             Event::Input(Input::Move(Motion::MouseCursor(_, _))) => mouse_pos = e.mouse_cursor_args().unwrap(),
             _ => ()
