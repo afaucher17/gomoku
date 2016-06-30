@@ -5,14 +5,13 @@ use board::{Board, BoardState, Move, Square};
 use minimax::TTEntry;
 use minimax::minimax;
 
-use std::io;
 use std::i32;
 use self::time::PreciseTime;
 use std::collections::HashMap;
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver};
 use std::thread;
-use self::rand::{thread_rng, Rng};
+use self::rand::{Rng};
 
 pub struct Game {
     pub board: Board,
@@ -40,32 +39,41 @@ impl Game {
         let mut rng = rand::thread_rng();
         Board::init_zobrist_array();
         let toss: u8 = rng.gen_range(0, 2);
-        let player_1 = Player { color: if toss == 0 {
-            Square::Black
-        } else {
-            Square::White
-        },
-        is_ai: ai_player
+        let player_1 = Player {
+            color: if toss == 0 { Square::Black } else { Square::White },
+            is_ai: ai_player
         };
-        let player_2 = Player { color: if toss == 0 {
-            Square::White
-        } else {
-            Square::Black
-        },
-        is_ai: false,
+        let player_2 = Player {
+            color: if toss == 0 { Square::White } else { Square::Black },
+            is_ai: false,
         };
         let mut game = Game {
-            board: Board::new(),
+            board: Board::new(),/*Board::from(concat!(
+                           "BBWBBBW------------\n",
+                           "BWWBWB-------------\n",
+                           "BBB-WB-------------\n",
+                           "BB-W---------------\n",
+                           "WBW-B-W------------\n",
+                           "-W---B-W-----------\n",
+                           "B-------B----------\n",
+                           "-------------------\n",
+                           "-------------------\n",
+                           "-------------------\n",
+                           "-------------------\n",
+                           "-------------------\n",
+                           "-------------------\n",
+                           "-------------------\n",
+                           "-------------------\n",
+                           "-------------------\n",
+                           "-------------------\n",
+                           "-------------------\n",
+                           "-------------------\n")),*/
             board_state: BoardState::InProgress,
             players: vec![player_1.clone(), player_2.clone()],
-            current_player: if toss == 0 {
-                player_1
-            } else {
-                player_2
-            },
+            current_player: if toss == 0 { player_1 } else { player_2 },
             last_move: None,
             receiver: None,
-            map: HashMap::new(), 
+            map: HashMap::new(),
         };
         if game.current_player.is_ai {
             game.ai_move()
@@ -110,6 +118,7 @@ impl Game {
         let color = self.current_player.color.clone();
         thread::spawn(move || {
             let pos = Game::get_input_ai(&board, &color, &mut map);
+            println!("{:?}", pos);
             tx.send(AIDecision { pos: pos, map: map }).unwrap();
         });
     }

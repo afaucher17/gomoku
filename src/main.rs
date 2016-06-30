@@ -5,12 +5,8 @@ extern crate find_folder;
 extern crate opengl_graphics;
 
 use piston_window::*;
-use opengl_graphics::GlGraphics;
-use opengl_graphics::glyph_cache::GlyphCache;
-use gomoku::board::{Board, Square};
 use gomoku::game::{Game};
 use gomoku::graphics::{Settings, App};
-use std::sync::mpsc;
 
 fn main() {
     let settings = Settings::new();
@@ -21,16 +17,16 @@ fn main() {
         .opengl(opengl)
         .build()
         .unwrap();
-    let app = App::new(settings, &mut window);
+    let app = App::new(/*settings, &mut window*/);
     let mut game = Game::new(true);
     let mut mouse_pos: [f64; 2] = [0.0; 2];
     while let Some(e) = window.next() {
         match e {
             Event::Render(_) => app.on_render(&e, &mut window, &game.board),
-            Event::Input(Input::Release(Button::Mouse(Left))) => {
+            Event::Input(Input::Release(Button::Mouse(MouseButton::Left))) => {
                 let mut pos = None;
                 {
-                    pos = app.on_click(&game.board, &mouse_pos);
+                    pos = app.on_click(&mouse_pos);
                 }
                 game.play(pos);
             },

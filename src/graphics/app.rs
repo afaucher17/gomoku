@@ -1,23 +1,20 @@
 use graphics::piston_window::*;
 use graphics::piston_window::ellipse::circle;
-use graphics::opengl_graphics::GlGraphics;
-use graphics::opengl_graphics::glyph_cache::GlyphCache;
 use graphics::graphics::math::Matrix2d;
-use graphics::gfx_device_gl::{Resources};
-use graphics::find_folder;
+//use graphics::find_folder;
+//use graphics::Settings;
 
-use graphics::Settings;
 use board::{Board, Square};
 
 pub struct App {
-    settings: Settings,
+    /*settings: Settings,
     black_text: Option<usize>,//Texture<Resources>>,
-    white_text: Option<usize>,//Texture<Resources>>,
+    white_text: Option<usize>,//Texture<Resources>>,*/
 }
 
 impl App {
-    pub fn new(settings: Settings, window: &mut PistonWindow) -> Self {
-        let assets = find_folder::Search::ParentsThenKids(3, 3)
+    pub fn new(/*settings: Settings, window: &mut PistonWindow*/) -> Self {
+/*        let assets = find_folder::Search::ParentsThenKids(3, 3)
             .for_folder("assets")
             .unwrap();
         let black_text = assets.join("black.png");
@@ -33,12 +30,12 @@ impl App {
             &white_text,
             Flip::None,
             &TextureSettings::new())
-            .unwrap();
+            .unwrap();*/
 
         App {
-            settings: settings,
+            /*settings: settings,
             black_text: None,
-            white_text: None,
+            white_text: None,*/
         }
     }
 
@@ -67,12 +64,14 @@ impl App {
         });
     }
 
-    pub fn on_click(&self, board: &Board, mouse_pos: &[f64; 2]) -> Option<(usize, usize)> {
+    pub fn on_click(&self, mouse_pos: &[f64; 2]) -> Option<(usize, usize)> {
         let mut x = mouse_pos[0] - 40.0;
-        if x < 0.0 { x = 0.5 } else { x = x / 40.0 }
+        x = x / 40.0;
         let mut y = mouse_pos[1] - 40.0;
-        if y < 0.0 { y = 0.5 } else { y = y / 40.0 }
-        if (x.fract() < 0.3 || x.fract() > 0.7) && (y.fract() < 0.3 || y.fract() > 0.7) {
+        y = y / 40.0;
+        if (x.fract().abs() < 0.3 || (x.fract() > 0.7 && x > 0.0)) && (y.fract().abs() < 0.3 || (y.fract() > 0.7 && x > 0.0)) {
+            if x < 0.0 { x = 0.0 }
+            if y < 0.0 { y = 0.0 }
             Some((x.round() as usize, y.round() as usize))
         }
         else { None }
