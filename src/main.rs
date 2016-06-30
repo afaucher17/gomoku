@@ -6,6 +6,7 @@ extern crate opengl_graphics;
 
 use piston_window::*;
 use gomoku::game::{Game};
+use gomoku::board::{BoardState};
 use gomoku::graphics::{Settings, App};
 
 fn main() {

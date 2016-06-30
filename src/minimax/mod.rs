@@ -89,15 +89,18 @@ pub fn minimax(board: &Board,
               )
     -> Decision
 {
+    println!("minimax");
     let current_color = match maximizing_player { true => player.clone(), false => player.opposite() };
     // Time-out
     if start.to(PreciseTime::now()).num_milliseconds() >= 500 {
+        println!("timeout");
         return Decision {
             score: 0,
             pos: None
         };
     }
 
+    println!("transition table");
     // Transition Table
     {
         let tte = ttmap.get(&board.hash);
@@ -105,16 +108,18 @@ pub fn minimax(board: &Board,
         {
             let tte = tte.unwrap();
             match tte.tttype {
-                TTType::ExactValue => return Decision { score: tte.score, pos: prev_play },
+                TTType::ExactValue if prev_play.is_some() => return Decision { score: tte.score, pos: prev_play },
                 TTType::Lowerbound if tte.score > alpha => alpha = tte.score,
                 TTType::Upperbound if tte.score < beta => beta = tte.score,
                 _ => ()
             }
-            if alpha >= beta {
+            if alpha >= beta && prev_play.is_some() {
                 return Decision { score: tte.score, pos: prev_play };
             }
         }
     }
+
+    println!("terminal node");
     // Terminal Node
     if depth == 0 || board.is_terminal() {
         let value = board.evaluation(&player, &current_color);
@@ -127,11 +132,14 @@ pub fn minimax(board: &Board,
         else {
             ttmap.insert(board.hash, TTEntry { score: value, tttype: TTType::ExactValue, depth: depth });
         }
+        println!("{:?}", board);
         return Decision {
             score: value,
-            pos: prev_play
+            pos: prev_play,
         };
     }
+
+    println!("get_plays");
     let plays: Vec<(usize, usize)> = get_plays(board, &current_color, depth - 1);
     if maximizing_player {
         let mut v = Decision { score: i32::MIN, pos: None };
