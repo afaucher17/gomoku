@@ -15,6 +15,7 @@ pub struct Decision
     pub pos: Option<(usize, usize)>
 }
 
+#[derive(Clone)]
 pub struct TTEntry
 {
     score: i32,
@@ -22,6 +23,7 @@ pub struct TTEntry
     depth: usize,
 }
 
+#[derive(Clone)]
 enum TTType
 {
     ExactValue,

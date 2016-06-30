@@ -19,7 +19,7 @@ pub struct Board
     pub hash: u64,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Move
 {
     Illegal,

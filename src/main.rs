@@ -8,6 +8,7 @@ use piston_window::*;
 use opengl_graphics::GlGraphics;
 use opengl_graphics::glyph_cache::GlyphCache;
 use gomoku::board::{Board, Square};
+use gomoku::game::{Game};
 use gomoku::graphics::{Settings, App};
 use std::sync::mpsc;
 
@@ -21,40 +22,21 @@ fn main() {
         .build()
         .unwrap();
     let app = App::new(settings, &mut window);
-
-    let board = Board::from(concat!(
-            "___________________\n",
-            "___________________\n",
-            "___________________\n",
-            "___________________\n",
-            "___________________\n",
-            "___________________\n",
-            "___________________\n",
-            "___________________\n",
-            "________B__________\n",
-            "_________B_________\n",
-            "___________________\n",
-            "___________________\n",
-            "____________B______\n",
-            "_____________W_____\n",
-            "___________________\n",
-            "___________________\n",
-            "___________________\n",
-            "___________________\n",
-            "___________________"));
-
-    let (tx, rx) = mpsc::channel();
-
+    let mut game = Game::new(true);
+    let mut mouse_pos: [f64; 2] = [0.0; 2];
     while let Some(e) = window.next() {
         match e {
-            Event::Render(_) => app.on_render(&e, &mut window, &board),
+            Event::Render(_) => app.on_render(&e, &mut window, &game.board),
+            Event::Input(Input::Release(Button::Mouse(Left))) => {
+                let mut pos = None;
+                {
+                    pos = app.on_click(&game.board, &mouse_pos);
+                }
+                game.play(pos);
+            },
+            Event::Input(Input::Move(Motion::MouseCursor(_, _))) => mouse_pos = e.mouse_cursor_args().unwrap(),
             _ => ()
         }
-        if let Some(button) = e.press_args() {
-            if button == Button::Mouse(MouseButton::Left) {
-                // I get the board position from app, I get none if the user click is not in the
-                // board
-            }
-        }
+        game.update();
     }
 }
