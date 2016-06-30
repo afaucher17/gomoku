@@ -1,12 +1,15 @@
 use graphics::piston_window::*;
 use graphics::piston_window::ellipse::circle;
 use graphics::graphics::math::Matrix2d;
-//use graphics::find_folder;
+use graphics::find_folder;
 //use graphics::Settings;
 
-use board::{Board, Square};
+use std::path::PathBuf;
+
+use board::{Board, BoardState, Square};
 
 pub struct App {
+    font: PathBuf,
     /*settings: Settings,
     black_text: Option<usize>,//Texture<Resources>>,
     white_text: Option<usize>,//Texture<Resources>>,*/
@@ -14,10 +17,11 @@ pub struct App {
 
 impl App {
     pub fn new(/*settings: Settings, window: &mut PistonWindow*/) -> Self {
-/*        let assets = find_folder::Search::ParentsThenKids(3, 3)
+        let assets = find_folder::Search::ParentsThenKids(3, 3)
             .for_folder("assets")
             .unwrap();
-        let black_text = assets.join("black.png");
+        let font = assets.join("FiraSans-Regular.ttf");
+        /*let black_text = assets.join("black.png");
         let black_text = Texture::from_path(
             &mut window.factory,
             &black_text,
@@ -33,6 +37,7 @@ impl App {
             .unwrap();*/
 
         App {
+            font: font,
             /*settings: settings,
             black_text: None,
             white_text: None,*/
@@ -41,26 +46,40 @@ impl App {
 
     pub fn on_render(&self, e: &Event, win: &mut PistonWindow, board: &Board)
     {
+        let factory = win.factory.clone();
+        let mut glyphs = Glyphs::new(&self.font, factory).unwrap();
         win.draw_2d(e, |c, g| {
             clear(color::WHITE, g);
-            let transform = c.transform.trans(40.0, 40.0);
             Rectangle::new([1.0, 0.91, 0.5, 1.0]).
                 draw([0.0, 0.0, 840.0, 840.0],
                      &c.draw_state,
                      c.transform,
-                     g
-                    );
+                     g);
             let grid = grid::Grid {
                 cols: 19,
                 rows: 19,
                 units: 40.0,
             };
+            let rec_trans = c.transform.trans(40.0, 40.0);
             grid.draw(&Line::new([0.0, 0.0, 0.0, 1.0], 1.0),
-            &c.draw_state,
-            transform,
-            g
-            );
+                &c.draw_state,
+                rec_trans,
+                g);
             self.draw_board(c.transform, board, g);
+            let text_trans = c.transform.trans(880.0, 40.0);
+            let message = match board.game_state {
+                BoardState::Victory(Square::Black) => "Black Victory!",
+                BoardState::Victory(Square::White) => "White Victory!",
+                BoardState::Victory(Square::Empty) => "Empty Victory!",
+                BoardState::FiveAligned(Square::Black) => "Black has five aligned",
+                BoardState::FiveAligned(Square::White) => "White has five aligned",
+                BoardState::FiveAligned(Square::Empty) => "Empty has five aligned",
+                BoardState::Draw => "Draw",
+                BoardState::InProgress => "Game in progress",
+            };
+            text::Text::new_color([0.0, 0.0, 0.0, 1.0], 32)
+                .draw(message, &mut glyphs, &c.draw_state, text_trans, g);
+
         });
     }
 
