@@ -89,18 +89,15 @@ pub fn minimax(board: &Board,
               )
     -> Decision
 {
-    println!("minimax");
     let current_color = match maximizing_player { true => player.clone(), false => player.opposite() };
     // Time-out
     if start.to(PreciseTime::now()).num_milliseconds() >= 500 {
-        println!("timeout");
         return Decision {
             score: 0,
             pos: None
         };
     }
 
-    println!("transition table");
     // Transition Table
     {
         let tte = ttmap.get(&board.hash);
@@ -119,7 +116,6 @@ pub fn minimax(board: &Board,
         }
     }
 
-    println!("terminal node");
     // Terminal Node
     if depth == 0 || board.is_terminal() {
         let value = board.evaluation(&player, &current_color);
@@ -132,20 +128,18 @@ pub fn minimax(board: &Board,
         else {
             ttmap.insert(board.hash, TTEntry { score: value, tttype: TTType::ExactValue, depth: depth });
         }
-        println!("{:?}", board);
         return Decision {
             score: value,
             pos: prev_play,
         };
     }
 
-    println!("get_plays");
     let plays: Vec<(usize, usize)> = get_plays(board, &current_color, depth - 1);
     if maximizing_player {
         let mut v = Decision { score: i32::MIN, pos: None };
         //println!(" (DEPTH = {}, POS = {:?}, (MAXIMAZING):", depth, prev_play);
         for pos in plays {
-            if let Move::Legal(child, _) = board.play_at(Some(pos), &current_color)
+            if let Move::Legal(child, _, _, _) = board.play_at(Some(pos), &current_color, start)
             {
                 {
                     let decision = minimax(&child, depth - 1, alpha, beta, false, Some(pos), player, start, ttmap);
@@ -178,7 +172,7 @@ pub fn minimax(board: &Board,
     else {
         let mut v = Decision { score: i32::MAX, pos: None };
         for pos in plays {
-            if let Move::Legal(child, _) = board.play_at(Some(pos), &current_color) {
+            if let Move::Legal(child, _, _, _) = board.play_at(Some(pos), &current_color, start) {
                 {
                     let decision = minimax(&child, depth - 1, alpha, beta, true, Some(pos), player, start, ttmap);
                     if decision.pos == None { return decision; }
