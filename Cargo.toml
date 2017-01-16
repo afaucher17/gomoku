@@ -14,14 +14,10 @@ doc = false
 unstable = [] # for travis-cargo
 
 [dependencies]
-piston_window = "0.44.0"
-gfx_core = "*"
-gfx_device_gl = "*"
 find_folder = "0.3.0"
 itertools = "0.4"
 rand = "0.3"
-time = "*"
-piston = "*"
-piston2d-graphics = "*"
-pistoncore-glutin_window = "*"
-piston2d-opengl_graphics = "*"
+time = "0.1.36"
+glutin = "0.7.2"
+image = "0.12.1"
+glium = "0.16.0"
