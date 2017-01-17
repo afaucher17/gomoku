@@ -50,8 +50,8 @@ impl App {
 
         uniform sampler2D tex;
 
-        voidmain() {
-            color = texture(tex, v_tex_coords)<F15>;
+        void main() {
+            color = texture(tex, v_tex_coords);
         }
         "#;
 
@@ -116,12 +116,12 @@ impl App {
                             [0.035, 0.0, 0.0, 0.0],
                             [0.0, 0.035, 0.0, 0.0],
                             [0.0, 0.0, 0.035, 0.0],
-                            [-1.0 + (j as f32 + 1.1) * 0.075, -1.0 + (i as f32 + 1.0) * 0.1, 0.0, 1.0f32],
+                            [-1.0 + (j as f32 + 1.1) * 0.075, 1.0 - (i as f32 + 1.0) * 0.1, 0.0, 1.0f32],
                         ],
                         tex: tex,
                     }
                 };
-                match board.state[i][j] {
+                match board.state[j][i] {
                     Square::White => 
                         target.draw(&(self.vertex_buffer), &indices, &(self.program),
                                     &create_uniforms(&(self.texture_white)), &Default::default()).unwrap(),
@@ -139,7 +139,7 @@ impl App {
     pub fn on_render(&self, display: &GlutinFacade, game: &Game)
     {
         let mut target = display.draw();
-        target.clear_color(0.0, 0.0, 1.0, 1.0);
+        target.clear_color(1.0, 1.0, 1.0, 1.0);
         let indices = glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip);
 
         let uniforms = uniform! {
@@ -230,14 +230,19 @@ impl App {
     });*/
     }
 
-    pub fn on_click(&self, mouse_pos: &[f64; 2]) -> Option<(usize, usize)> {
-        let mut x = mouse_pos[0] - 40.0;
-        x = x / 40.0;
-        let mut y = mouse_pos[1] - 40.0;
-        y = y / 40.0;
+    pub fn on_click(&self, mouse_pos: &[f64; 2], size_pixels: (u32, u32)) -> Option<(usize, usize)> {
+        println!("x: {} y: {}", mouse_pos[0], mouse_pos[1]);
+        let (spx, spy) = size_pixels;
+        let ratiox = (0.75 * spx as f64 / 20.0);
+        let ratioy = (spy as f64 / 20.0);
+        let mut x = mouse_pos[0] - ratiox;
+        x = x / ratiox;
+        let mut y = mouse_pos[1] - ratioy;
+        y = y / ratioy;
         if (x.fract().abs() < 0.3 || (x.fract() > 0.7 && x > 0.0)) && (y.fract().abs() < 0.3 || (y.fract() > 0.7 && x > 0.0)) {
             if x < 0.0 { x = 0.0 }
             if y < 0.0 { y = 0.0 }
+            println!("plateau x: {} y: {}", x, y);
             Some((x.round() as usize, y.round() as usize))
         }
         else { None }
