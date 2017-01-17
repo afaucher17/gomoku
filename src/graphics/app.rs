@@ -1,13 +1,13 @@
 use graphics;
 use graphics::image;
-use graphics::glium;
+use glium;
 use graphics::glutin;
-use graphics::glium::Surface;
+use glium::Surface;
 use std::io::Cursor;
-use graphics::glium::{VertexBuffer, Program, Frame, DisplayBuild};
-use graphics::glium::texture::texture2d::Texture2d;
-use graphics::glium::texture::RawImage2d;
-use graphics::glium::backend::glutin_backend::GlutinFacade;
+use glium::{VertexBuffer, Program, Frame, DisplayBuild};
+use glium::texture::texture2d::Texture2d;
+use glium::texture::RawImage2d;
+use glium::backend::glutin_backend::GlutinFacade;
 
 use board::{Board, Move, BoardState, Square};
 use game::{Game};
@@ -18,32 +18,16 @@ struct Vertex {
     tex_coords: [f32; 2],
 }
 
-pub struct App <'a, T> {
-    image_grid: RawImage2d<'a, T>,
-    image_black: RawImage2d<'a, T>,
-    image_white: RawImage2d<'a, T>,
-    texture_grid: Option<Texture2d>,
-    texture_black: Option<Texture2d>,
-    texture_white: Option<Texture2d>,
-    vertex_buffer: Option<VertexBuffer<Vertex>>,
-    program: Option<Program>,
+pub struct App {
+    texture_grid: Texture2d,
+    texture_black: Texture2d,
+    texture_white: Texture2d,
+    vertex_buffer: VertexBuffer<Vertex>,
+    program: Program,
 }
 
-impl <'a, T> App <'a, T> {
-
-    pub fn load(&self, display: &GlutinFacade) {
-        self.texture_grid = graphics::glium::texture::Texture2d::new(display, self.image_grid).ok();
-        self.texture_black = graphics::glium::texture::Texture2d::new(display, self.image_black).ok();
-        self.texture_white = graphics::glium::texture::Texture2d::new(display, self.image_white).ok();
-
-        let vertex1 = Vertex { position: [ -1.0, 1.0 ], tex_coords: [ 0.0, 1.0 ]};
-        let vertex2 = Vertex { position: [ 0.5, 1.0], tex_coords: [ 1.0, 1.0 ]};
-        let vertex3 = Vertex { position: [ -1.0, -1.0], tex_coords: [ 0.0, 0.0 ] };
-        let vertex4 = Vertex { position: [ 0.5, -1.0], tex_coords: [ 1.0, 0.0 ] };
-        let shape = vec![vertex1, vertex2, vertex3, vertex4];
-
-        self.vertex_buffer = graphics::glium::VertexBuffer::new(display, &shape).ok();
-
+impl App {
+    fn init_program(display: &GlutinFacade) -> Program {
         let vertex_shader_src = r#"
         #version 140
 
@@ -67,48 +51,60 @@ impl <'a, T> App <'a, T> {
         uniform sampler2D tex;
 
         voidmain() {
-            color = texture(tex, v_tex_coords);
+            color = texture(tex, v_tex_coords)<F15>;
         }
         "#;
 
-        self.program = graphics::glium::Program::from_source(display, vertex_shader_src, fragment_shader_src, None).ok();
+        glium::Program::from_source(display, vertex_shader_src, fragment_shader_src, None).unwrap()
     }
 
-    pub fn new(display: &GlutinFacade) -> Self<'a, T> {
+    fn init_vertex_buffer(display: &GlutinFacade) -> VertexBuffer<Vertex> {
+        let vertex1 = Vertex { position: [ -1.0, 1.0 ], tex_coords: [ 0.0, 1.0 ]};
+        let vertex2 = Vertex { position: [ 0.5, 1.0], tex_coords: [ 1.0, 1.0 ]};
+        let vertex3 = Vertex { position: [ -1.0, -1.0], tex_coords: [ 0.0, 0.0 ] };
+        let vertex4 = Vertex { position: [ 0.5, -1.0], tex_coords: [ 1.0, 0.0 ] };
+        let shape = vec![vertex1, vertex2, vertex3, vertex4];
+
+        glium::VertexBuffer::new(display, &shape).unwrap()
+    }
+
+    fn init_texture(display: &GlutinFacade, cursor: Cursor<&[u8]>) -> Texture2d {
+        let image = image::load(cursor, image::PNG).unwrap().to_rgba();
+
+        let image_dimensions = image.dimensions();
+
+        let image = glium::texture::RawImage2d::from_raw_rgba_reversed(image.into_raw(), image_dimensions);
+
+        glium::texture::Texture2d::new(display, image).unwrap()
+    }
+
+    pub fn load(&mut self, display: &GlutinFacade)
+    {
+        self.vertex_buffer = App::init_vertex_buffer(display);
+        self.program = App::init_program(display);
+    }
+
+    pub fn new(display: &GlutinFacade) -> Self {
         implement_vertex!(Vertex, position, tex_coords);
 
-        let image_grid = image::load(Cursor::new(&include_bytes!("../../resources/grid-color.png")[..]),
-        image::PNG).unwrap().to_rgba();
-        let image_black = image::load(Cursor::new(&include_bytes!("../../resources/black_stone.png")[..]),
-        image::PNG).unwrap().to_rgba();
-        let image_white = image::load(Cursor::new(&include_bytes!("../../resources/white_stone.png")[..]),
-        image::PNG).unwrap().to_rgba();
+        let texture_grid = App::init_texture(display, Cursor::new(&include_bytes!("../../resources/grid-color.png")[..]));
+        let texture_black = App::init_texture(display, Cursor::new(&include_bytes!("../../resources/black_stone.png")[..]));
+        let texture_white = App::init_texture(display, Cursor::new(&include_bytes!("../../resources/white_stone.png")[..]));
+        let vertex_buffer = App::init_vertex_buffer(display);
+        let program = App::init_program(display);
 
-        let image_grid_dimensions = image_grid.dimensions();
-        let image_black_dimensions = image_black.dimensions();
-        let image_white_dimensions = image_white.dimensions();
-
-        let image_grid = graphics::glium::texture::RawImage2d::from_raw_rgba_reversed(image_grid.into_raw(), image_grid_dimensions);
-        let image_black = graphics::glium::texture::RawImage2d::from_raw_rgba_reversed(image_black.into_raw(), image_black_dimensions);
-        let image_white = graphics::glium::texture::RawImage2d::from_raw_rgba_reversed(image_white.into_raw(), image_white_dimensions);
-
-        let app = App {
-            image_grid: image_grid,
-            image_black: image_black,
-            image_white: image_white,
-            texture_grid: None,
-            texture_white: None,
-            texture_black: None,
-            vertex_buffer: None,
-            program: None,
-        };
-        app.load(display);
-        app
+        App {
+            texture_grid: texture_grid,
+            texture_black: texture_black,
+            texture_white: texture_white,
+            vertex_buffer: vertex_buffer,
+            program: program,
+        }
     }
 
     fn draw_board(&self, board: &Board, target: &mut Frame)
     {
-        let indices = graphics::glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip);
+        let indices = glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip);
         for i in 0..19
         {
             for j in 0..19
@@ -127,11 +123,11 @@ impl <'a, T> App <'a, T> {
                 };
                 match board.state[i][j] {
                     Square::White => 
-                        target.draw(&(self.vertex_buffer.unwrap()), &indices, &(self.program.unwrap()),
-                                    &create_uniforms(&(self.texture_white.unwrap())), &Default::default()).unwrap(),
+                        target.draw(&(self.vertex_buffer), &indices, &(self.program),
+                                    &create_uniforms(&(self.texture_white)), &Default::default()).unwrap(),
                     Square::Black =>
-                        target.draw(&(self.vertex_buffer.unwrap()), &indices, &(self.program.unwrap()),
-                                    &create_uniforms(&(self.texture_black.unwrap())), &Default::default()).unwrap(),
+                        target.draw(&(self.vertex_buffer), &indices, &(self.program),
+                                    &create_uniforms(&(self.texture_black)), &Default::default()).unwrap(),
                     Square::Empty => ()
                 }
             }
@@ -144,7 +140,7 @@ impl <'a, T> App <'a, T> {
     {
         let mut target = display.draw();
         target.clear_color(0.0, 0.0, 1.0, 1.0);
-        let indices = graphics::glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip);
+        let indices = glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip);
 
         let uniforms = uniform! {
             matrix: [
@@ -153,10 +149,10 @@ impl <'a, T> App <'a, T> {
                 [0.0, 0.0, 1.0, 0.0],
                 [0.0, 0.0, 0.0, 1.0f32],
             ],
-            tex: &(self.texture_grid.unwrap()),
+            tex: &(self.texture_grid),
         };
 
-        target.draw(&(self.vertex_buffer.unwrap()), &indices, &(self.program.unwrap()), &uniforms, &Default::default()).unwrap();
+        target.draw(&(self.vertex_buffer), &indices, &(self.program), &uniforms, &Default::default()).unwrap();
         self.draw_board(&game.board, &mut target);
         target.finish().unwrap();
 

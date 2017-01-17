@@ -1,5 +1,3 @@
-#[macro_use]
-extern crate glium;
 extern crate glutin;
 extern crate image;
 
