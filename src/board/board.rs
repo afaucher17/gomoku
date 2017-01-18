@@ -28,6 +28,7 @@ pub enum Move
     DoubleThrees,
     Legal(Board, (usize, usize), Square, Duration),
     OutOfBounds,
+    MoveIntoCapture,
     Other(&'static str),
 }
 
@@ -210,13 +211,17 @@ impl Board {
                 }
                 else {
                     clone.state[x][y] = color.clone();
-                    if !clone.check_free_threes(x as i32, y as i32, color) {
-                        clone = clone.check_capture(color, (x, y));
-                        clone.game_state = clone.get_game_state(pos.unwrap(), color);
-                        clone.add_move(pos.unwrap(), color);
-                        Move::Legal(clone, (x, y), color.clone(), now.to(PreciseTime::now()))
+                    if !clone.check_moveintocapture(color, (x, y)) {
+                        if !clone.check_free_threes(x as i32, y as i32, color)
+                        {
+                            clone = clone.check_capture(color, (x, y));
+                            clone.game_state = clone.get_game_state(pos.unwrap(), color);
+                            clone.add_move(pos.unwrap(), color);
+                            Move::Legal(clone, (x, y), color.clone(), now.to(PreciseTime::now()))
+                        }
+                        else { Move::DoubleThrees }
                     }
-                    else { Move::DoubleThrees }
+                    else { Move::MoveIntoCapture }
                 }
             },
             None => Move::Other(""),

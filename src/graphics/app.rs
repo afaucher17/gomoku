@@ -180,6 +180,7 @@ impl App {
             Some(Move::DoubleThrees) => "Double Three move".to_string(),
             Some(Move::Legal(_, (x, y), ref color, _)) => format!("{} {} at ({}, {})", "Last move:", color, x.to_string(), y.to_string()),
             Some(Move::OutOfBounds) => "Out of Bounds".to_string(),
+            Some(Move::MoveIntoCapture) => "Cannot move into a capture".to_string(),
             Some(Move::Other(message)) => message.to_string(),
             _ => "No moves yet".to_string(),
         };
