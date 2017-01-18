@@ -1,7 +1,7 @@
 use graphics;
 use graphics::image;
 use glium;
-use graphics::glutin;
+use graphics::{glutin, glium_text, cgmath};
 use glium::Surface;
 use std::io::Cursor;
 use glium::{VertexBuffer, Program, Frame, DisplayBuild};
@@ -124,16 +124,38 @@ impl App {
                 match board.state[j][i] {
                     Square::White => 
                         target.draw(&(self.vertex_buffer), &indices, &(self.program),
-                                    &create_uniforms(&(self.texture_white)), &Default::default()).unwrap(),
+                        &create_uniforms(&(self.texture_white)), &Default::default()).unwrap(),
                     Square::Black =>
                         target.draw(&(self.vertex_buffer), &indices, &(self.program),
-                                    &create_uniforms(&(self.texture_black)), &Default::default()).unwrap(),
+                        &create_uniforms(&(self.texture_black)), &Default::default()).unwrap(),
                     Square::Empty => ()
                 }
             }
         }
     }
 
+    pub fn draw_text(&self, display: &GlutinFacade, game: &Game, target: &mut Frame)
+    {
+        let system = glium_text::TextSystem::new(display);
+
+        let font = glium_text::FontTexture::new(display,
+                                                &include_bytes!("../../resources/FiraSans-Regular.ttf")[..], 70).unwrap();
+
+        let text = glium_text::TextDisplay::new(&system, &font, "Hello World!");
+        let text_width = text.get_width();
+        println!("Text width: {:?}", text_width);
+
+        let (w, h) = display.get_framebuffer_dimensions();
+
+        let matrix:[[f32; 4]; 4] = cgmath::Matrix4::new(
+            2.0 / text_width, 0.0, 0.0, 0.0,
+            0.0, 2.0 * (w as f32) / (h as f32) / text_width, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            -1.0, -1.0, 0.0, 1.0f32,
+            ).into();
+
+        glium_text::draw(&text, &system, target, matrix, (1.0, 1.0, 0.0, 1.0));
+    }
 
 
     pub fn on_render(&self, display: &GlutinFacade, game: &Game)
@@ -154,6 +176,7 @@ impl App {
 
         target.draw(&(self.vertex_buffer), &indices, &(self.program), &uniforms, &Default::default()).unwrap();
         self.draw_board(&game.board, &mut target);
+        self.draw_text(display, game, &mut target);
         target.finish().unwrap();
 
         /*    let factory = win.factory.clone();
@@ -233,8 +256,8 @@ impl App {
     pub fn on_click(&self, mouse_pos: &[f64; 2], size_pixels: (u32, u32)) -> Option<(usize, usize)> {
         println!("x: {} y: {}", mouse_pos[0], mouse_pos[1]);
         let (spx, spy) = size_pixels;
-        let ratiox = (0.75 * spx as f64 / 20.0);
-        let ratioy = (spy as f64 / 20.0);
+        let ratiox = 0.75 * spx as f64 / 20.0;
+        let ratioy = spy as f64 / 20.0;
         let mut x = mouse_pos[0] - ratiox;
         x = x / ratiox;
         let mut y = mouse_pos[1] - ratioy;

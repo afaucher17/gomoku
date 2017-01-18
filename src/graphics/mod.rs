@@ -1,5 +1,7 @@
 extern crate glutin;
+extern crate glium_text;
 extern crate image;
+extern crate cgmath;
 
 mod app;
 mod settings;
