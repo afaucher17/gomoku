@@ -1,7 +1,7 @@
 extern crate rand;
 extern crate time;
 
-use board::{Board, BoardState, Move, Square};
+use board::{Board, Move, Square};
 use minimax::TTEntry;
 use minimax::minimax;
 

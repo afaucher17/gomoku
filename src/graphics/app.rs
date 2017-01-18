@@ -1,12 +1,15 @@
-use graphics;
-use graphics::image;
 use glium;
-use graphics::{glutin, glium_text, cgmath};
-use glium::Surface;
+
 use std::io::Cursor;
-use glium::{VertexBuffer, Program, Frame, DisplayBuild};
+
+use graphics::image;
+use graphics::{glium_text, cgmath};
+
+use graphics::glium_text::{TextSystem, FontTexture};
+
+use glium::Surface;
+use glium::{VertexBuffer, Program, Frame};
 use glium::texture::texture2d::Texture2d;
-use glium::texture::RawImage2d;
 use glium::backend::glutin_backend::GlutinFacade;
 
 use board::{Board, Move, BoardState, Square};
@@ -23,6 +26,8 @@ pub struct App {
     texture_black: Texture2d,
     texture_white: Texture2d,
     vertex_buffer: VertexBuffer<Vertex>,
+    text_system: TextSystem,
+    font: FontTexture,
     program: Program,
 }
 
@@ -78,6 +83,17 @@ impl App {
         glium::texture::Texture2d::new(display, image).unwrap()
     }
 
+    fn init_text_system(display: &GlutinFacade) -> TextSystem
+    {
+        glium_text::TextSystem::new(display)
+    }
+
+    fn init_font(display: &GlutinFacade) -> FontTexture
+    {
+       glium_text::FontTexture::new(display,
+            &include_bytes!("../../resources/FiraSans-Regular.ttf")[..], 70).unwrap()
+    }
+
     pub fn load(&mut self, display: &GlutinFacade)
     {
         self.vertex_buffer = App::init_vertex_buffer(display);
@@ -92,6 +108,8 @@ impl App {
         let texture_white = App::init_texture(display, Cursor::new(&include_bytes!("../../resources/white_stone.png")[..]));
         let vertex_buffer = App::init_vertex_buffer(display);
         let program = App::init_program(display);
+        let text_system = App::init_text_system(display);
+        let font = App::init_font(display);
 
         App {
             texture_grid: texture_grid,
@@ -99,6 +117,8 @@ impl App {
             texture_white: texture_white,
             vertex_buffer: vertex_buffer,
             program: program,
+            text_system: text_system,
+            font: font,
         }
     }
 
@@ -136,25 +156,86 @@ impl App {
 
     pub fn draw_text(&self, display: &GlutinFacade, game: &Game, target: &mut Frame)
     {
-        let system = glium_text::TextSystem::new(display);
 
-        let font = glium_text::FontTexture::new(display,
-                                                &include_bytes!("../../resources/FiraSans-Regular.ttf")[..], 70).unwrap();
+        let state = match game.board.game_state {
+              BoardState::Victory(Square::Black) => "Black Victory!",
+              BoardState::Victory(Square::White) => "White Victory!",
+              BoardState::Victory(Square::Empty) => "Empty Victory!",
+              BoardState::FiveAligned(Square::Black) => "Black has five aligned",
+              BoardState::FiveAligned(Square::White) => "White has five aligned",
+              BoardState::FiveAligned(Square::Empty) => "Empty has five aligned",
+              BoardState::Draw => "Draw",
+              BoardState::InProgress => "Game in progress",
+        };
+        let state_text = glium_text::TextDisplay::new(&(self.text_system), &(self.font), state);
 
-        let text = glium_text::TextDisplay::new(&system, &font, "Hello World!");
-        let text_width = text.get_width();
-        println!("Text width: {:?}", text_width);
+        let b_capture = format!("{}{}", game.board.b_capture.to_string(), " stones taken by Black");
+        let b_capture_text = glium_text::TextDisplay::new(&(self.text_system), &(self.font), b_capture.as_str());
+
+        let w_capture = format!("{}{}", game.board.w_capture.to_string(), " stones taken by White");
+        let w_capture_text = glium_text::TextDisplay::new(&(self.text_system), &(self.font), w_capture.as_str());
+
+        let last_move = match game.last_move {
+            Some(Move::Illegal) => "Illegal move".to_string(),
+            Some(Move::DoubleThrees) => "Double Three move".to_string(),
+            Some(Move::Legal(_, (x, y), ref color, _)) => format!("{} {} at ({}, {})", "Last move:", color, x.to_string(), y.to_string()),
+            Some(Move::OutOfBounds) => "Out of Bounds".to_string(),
+            Some(Move::Other(message)) => message.to_string(),
+            _ => "No moves yet".to_string(),
+        };
+        let last_move_text = glium_text::TextDisplay::new(&(self.text_system), &(self.font), last_move.as_str());
+
+
+
 
         let (w, h) = display.get_framebuffer_dimensions();
 
-        let matrix:[[f32; 4]; 4] = cgmath::Matrix4::new(
-            2.0 / text_width, 0.0, 0.0, 0.0,
-            0.0, 2.0 * (w as f32) / (h as f32) / text_width, 0.0, 0.0,
+        let state_matrix:[[f32; 4]; 4] = cgmath::Matrix4::new(
+            0.25 / 10.0, 0.0, 0.0, 0.0,
+            0.0, 0.25 * (w as f32) / (h as f32) / 10.0, 0.0, 0.0,
             0.0, 0.0, 1.0, 0.0,
-            -1.0, -1.0, 0.0, 1.0f32,
+            0.52, 0.91, 0.0, 1.0f32,
             ).into();
 
-        glium_text::draw(&text, &system, target, matrix, (1.0, 1.0, 0.0, 1.0));
+        let b_capture_matrix:[[f32; 4]; 4] = cgmath::Matrix4::new(
+            0.25 / 10.0, 0.0, 0.0, 0.0,
+            0.0, 0.25 * (w as f32) / (h as f32) / 10.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.52, 0.81, 0.0, 1.0f32,
+            ).into();
+
+        let w_capture_matrix:[[f32; 4]; 4] = cgmath::Matrix4::new(
+            0.25 / 10.0, 0.0, 0.0, 0.0,
+            0.0, 0.25 * (w as f32) / (h as f32) / 10.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.52, 0.71, 0.0, 1.0f32,
+            ).into();
+
+        let last_move_matrix:[[f32; 4]; 4] = cgmath::Matrix4::new(
+            0.25 / 10.0, 0.0, 0.0, 0.0,
+            0.0, 0.25 * (w as f32) / (h as f32) / 10.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.52, 0.61, 0.0, 1.0f32,
+            ).into();
+
+         let time_matrix:[[f32; 4]; 4] = cgmath::Matrix4::new(
+            0.25 / 10.0, 0.0, 0.0, 0.0,
+            0.0, 0.25 * (w as f32) / (h as f32) / 10.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.52, 0.51, 0.0, 1.0f32,
+            ).into();
+       
+
+        glium_text::draw(&state_text, &(self.text_system), target, state_matrix, (0.0, 0.0, 0.0, 1.0));
+        glium_text::draw(&b_capture_text, &(self.text_system), target, b_capture_matrix, (0.0, 0.0, 0.0, 1.0));
+        glium_text::draw(&w_capture_text, &(self.text_system), target, w_capture_matrix, (0.0, 0.0, 0.0, 1.0));
+        glium_text::draw(&last_move_text, &(self.text_system), target, last_move_matrix, (0.0, 0.0, 0.0, 1.0));
+
+        if let Some(Move::Legal(_, _, _, time)) = game.last_move {
+            let time = format!("Last move duration: {:.2}", time.num_milliseconds() as f64 / 1000.0);
+            let time_text = glium_text::TextDisplay::new(&(self.text_system), &(self.font), time.as_str());
+            glium_text::draw(&time_text, &(self.text_system), target, time_matrix, (0.0, 0.0, 0.0, 1.0));
+        };
     }
 
 
@@ -178,83 +259,9 @@ impl App {
         self.draw_board(&game.board, &mut target);
         self.draw_text(display, game, &mut target);
         target.finish().unwrap();
-
-        /*    let factory = win.factory.clone();
-              let mut glyphs = Glyphs::new(&self.font, factory).unwrap();
-              win.draw_2d(e, |c, g| {
-              clear(color::WHITE, g);
-              {
-              Rectangle::new([1.0, 0.91, 0.5, 1.0]).
-              draw([0.0, 0.0, 840.0, 840.0],
-              &c.draw_state,
-              c.transform,
-              g);
-              let grid = grid::Grid {
-              cols: 19,
-              rows: 19,
-              units: 40.0,
-              };
-              let rec_trans = c.transform.trans(40.0, 40.0);
-              grid.draw(&Line::new([0.0, 0.0, 0.0, 1.0], 1.0),
-              &c.draw_state,
-              rec_trans,
-              g);
-
-              self.draw_board(c.transform, &game.board, g);
-              }
-              {
-              let state_trans = c.transform.trans(880.0, 40.0);
-              let state = match game.board.game_state {
-              BoardState::Victory(Square::Black) => "Black Victory!",
-              BoardState::Victory(Square::White) => "White Victory!",
-              BoardState::Victory(Square::Empty) => "Empty Victory!",
-              BoardState::FiveAligned(Square::Black) => "Black has five aligned",
-              BoardState::FiveAligned(Square::White) => "White has five aligned",
-              BoardState::FiveAligned(Square::Empty) => "Empty has five aligned",
-              BoardState::Draw => "Draw",
-              BoardState::InProgress => "Game in progress",
-              };
-              text::Text::new_color([0.0, 0.0, 0.0, 1.0], 32)
-              .draw(state, &mut glyphs, &c.draw_state, state_trans, g);
-              }
-              {
-              let b_cap_trans = c.transform.trans(880.0, 80.0);
-              let b_capture = format!("{}{}", game.board.b_capture.to_string(), " stones taken by Black");
-              text::Text::new_color([0.0, 0.0, 0.0, 1.0], 32)
-              .draw(b_capture.as_str(), &mut glyphs, &c.draw_state, b_cap_trans, g);
-              }
-              {
-              let w_cap_trans = c.transform.trans(880.0, 120.0);
-              let w_capture = format!("{}{}", game.board.w_capture.to_string(), " stones taken by White");
-              text::Text::new_color([0.0, 0.0, 0.0, 1.0], 32)
-              .draw(w_capture.as_str(), &mut glyphs, &c.draw_state, w_cap_trans, g);
-              }
-              {
-              let last_trans = c.transform.trans(880.0, 160.0);
-              let last_move = match game.last_move {
-              Some(Move::Illegal) => "Illegal move".to_string(),
-              Some(Move::DoubleThrees) => "Double Three move".to_string(),
-              Some(Move::Legal(_, (x, y), ref color, _)) => format!("{} {} at ({}, {})", "Last move:", color, x.to_string(), y.to_string()),
-              Some(Move::OutOfBounds) => "OutOfBounds should never happen".to_string(),
-              Some(Move::Other(message)) => message.to_string(),
-              _ => "No moves yet".to_string()
-              };
-              text::Text::new_color([0.0, 0.0, 0.0, 1.0], 32)
-              .draw(last_move.as_str(), &mut glyphs, &c.draw_state, last_trans, g);
-              }
-              {
-              let time_trans = c.transform.trans(880.0, 200.0);
-              if let Some(Move::Legal(_, _, _, time)) = game.last_move {
-              let time_text = format!("Last move duration: {:.2}", time.num_milliseconds() as f64 / 1000.0);
-              text::Text::new_color([0.0, 0.0, 0.0, 1.0], 32)
-              .draw(time_text.as_str(), &mut glyphs, &c.draw_state, time_trans, g);
-              }
-              }
-    });*/
     }
 
     pub fn on_click(&self, mouse_pos: &[f64; 2], size_pixels: (u32, u32)) -> Option<(usize, usize)> {
-        println!("x: {} y: {}", mouse_pos[0], mouse_pos[1]);
         let (spx, spy) = size_pixels;
         let ratiox = 0.75 * spx as f64 / 20.0;
         let ratioy = spy as f64 / 20.0;
@@ -265,7 +272,6 @@ impl App {
         if (x.fract().abs() < 0.3 || (x.fract() > 0.7 && x > 0.0)) && (y.fract().abs() < 0.3 || (y.fract() > 0.7 && x > 0.0)) {
             if x < 0.0 { x = 0.0 }
             if y < 0.0 { y = 0.0 }
-            println!("plateau x: {} y: {}", x, y);
             Some((x.round() as usize, y.round() as usize))
         }
         else { None }

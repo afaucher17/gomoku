@@ -3,7 +3,6 @@ extern crate rand;
 extern crate time;
 
 use board::square::Square;
-use game::Player;
 
 use std::fmt;
 use std::cmp;
