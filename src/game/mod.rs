@@ -78,7 +78,7 @@ impl Game {
         if let Some(ref receiver) = self.receiver {
             if let Ok(decision) = receiver.try_recv() {
                 received = true;
-                player_move = self.board.play_at(decision.pos, &self.current_player.color, decision.start);
+                player_move = self.board.play_at(decision.pos, &self.current_player.color, decision.start, true);
                 self.map = decision.map.clone();
             }
         }
@@ -129,7 +129,7 @@ impl Game {
     pub fn play(&mut self, pos: Option<(usize, usize)>)
     {
         if !self.current_player.is_ai && pos != None {
-            let player_move = self.board.play_at(pos, &self.current_player.color, PreciseTime::now());
+            let player_move = self.board.play_at(pos, &self.current_player.color, PreciseTime::now(), true);
             self.apply_move(player_move);
         }
     }

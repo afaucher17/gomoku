@@ -1,5 +1,7 @@
-use board::board::{Board, Right};
+use board::board::{Board, Right, Move};
 use board::square::Square;
+
+use board::time::{PreciseTime};
 
 impl Board
 {
@@ -10,60 +12,60 @@ impl Board
         {
             s == "xyyx".replace("x", color.opposite().to_str()).replace("y", color.to_str())
         };
-        
+
         // East
         if x + 2 < 19 && x >= 1 {
             if capture((0..4).map(|i| self.state[x + i - 1][y].to_char())
-                .collect::<String>()) {
+                       .collect::<String>()) {
                 return true;
             };
         }
         // West
         if x + 1 < 19 && x >= 2 {
             if capture((0..4).map(|i| self.state[x + i - 2][y].to_char())
-                .collect::<String>()) {
+                       .collect::<String>()) {
                 return true;
             };
         }
         // South
         if y + 2 < 19 && y >= 1 {
             if capture((0..4).map(|i| self.state[x][y + i - 1].to_char())
-                .collect::<String>()) {
+                       .collect::<String>()) {
                 return true;
             };
         }
         // North
         if y + 1 < 19 && y >= 2 {
             if capture((0..4).map(|i| self.state[x][y + i - 2].to_char())
-                .collect::<String>()) {
+                       .collect::<String>()) {
                 return true;
             };
         }
         // North-East
         if y + 1 < 19 && y >= 2 && x + 2 < 19 && x >= 1 {
             if capture((0..4).map(|i| self.state[x + i - 1][y + i - 2].to_char())
-                .collect::<String>()) {
+                       .collect::<String>()) {
                 return true;
             };
         }
         // North-West
-         if y + 1 < 19 && y >= 2 && x + 1 < 19 && x >= 2 {
+        if y + 1 < 19 && y >= 2 && x + 1 < 19 && x >= 2 {
             if capture((0..4).map(|i| self.state[x + i - 2][y + i - 2].to_char())
-                .collect::<String>()) {
+                       .collect::<String>()) {
                 return true;
             };
         }
         // South-East
         if y + 2 < 19 && y >= 1 && x + 2 < 19 && x >= 1 {
             if capture((0..4).map(|i| self.state[x + i - 1][y + i - 1].to_char())
-                .collect::<String>()) {
+                       .collect::<String>()) {
                 return true;
             };
         }
         // South-West
         if y + 2 < 19 && y >= 1 && x + 1 < 19 && x >= 2 {
             if capture((0..4).map(|i| self.state[x + i - 2][y + i - 1].to_char())
-                .collect::<String>()) {
+                       .collect::<String>()) {
                 return true;
             };
         }
@@ -92,50 +94,50 @@ impl Board
             // East
             if x + 3 < 19 {
                 capture(Right { data: (0..4).map(|i| self.state[x + i][y].to_char())
-                        .collect::<String>(),
-                        fun: Box::new(move |i| (x + i, y))})
+                    .collect::<String>(),
+                    fun: Box::new(move |i| (x + i, y))})
             }
             // West
             if x >= 3 { 
                 capture(Right { data: (0..4).map(|i| self.state[x - i][y].to_char())
-                        .collect::<String>(),
-                        fun: Box::new(move |i| (x - i, y))})
+                    .collect::<String>(),
+                    fun: Box::new(move |i| (x - i, y))})
             }
             // South
             if y + 3 < 19 { 
                 capture(Right { data: (0..4).map(|i| self.state[x][y + i].to_char())
-                        .collect::<String>(),
-                        fun: Box::new(move |i| (x, y + i))})
+                    .collect::<String>(),
+                    fun: Box::new(move |i| (x, y + i))})
             }
             // North
             if y >= 3 { 
                 capture(Right { data: (0..4).map(|i| self.state[x][y - i].to_char())
-                        .collect::<String>(),
-                        fun: Box::new(move |i| (x, y - i))})
+                    .collect::<String>(),
+                    fun: Box::new(move |i| (x, y - i))})
             }
             // South-East
             if x + 3 < 19 && y + 3 < 19 {
                 capture(Right { data: (0..4).map(|i| self.state[x + i][y + i].to_char())
-                        .collect::<String>(),
-                        fun: Box::new(move |i| (x + i, y + i))})
+                    .collect::<String>(),
+                    fun: Box::new(move |i| (x + i, y + i))})
             }
             // North-East
             if x + 3 < 19 && y >= 3 {
                 capture(Right { data: (0..4).map(|i| self.state[x + i][y - i].to_char())
-                        .collect::<String>(),
-                        fun: Box::new(move |i| (x + i, y - i))})
+                    .collect::<String>(),
+                    fun: Box::new(move |i| (x + i, y - i))})
             }
             // South-West
             if x >= 3 && y + 3 < 19 {
                 capture(Right { data: (0..4).map(|i| self.state[x - i][y + i].to_char())
-                        .collect::<String>(),
-                        fun: Box::new(move |i| (x - i, y + i))})
+                    .collect::<String>(),
+                    fun: Box::new(move |i| (x - i, y + i))})
             }
             // North-West
             if x >= 3 && y >= 3 {
                 capture(Right { data: (0..4).map(|i| self.state[x - i][y - i].to_char())
-                        .collect::<String>(),
-                        fun: Box::new(move |i| (x - i, y - i))})
+                    .collect::<String>(),
+                    fun: Box::new(move |i| (x - i, y - i))})
             }
         }
         board.clone()
@@ -171,14 +173,6 @@ impl Board
         Board::get_positions(p, t)
     }
 
-    fn five_aligned_capture(&self) -> Vec<(usize, usize)> {
-        let p = vec![("BWW-", vec![1, 2]), ("-WWB", vec![1, 2]),
-        ("WBB-", vec![1, 2]), ("-BBW", vec![1, 2])];
-
-        let t = self.explode();
-        Board::get_positions(p, t)
-    }
-
     pub fn check_capture_pos(&self, color: &Square) -> Vec<(usize, usize)>
     {
         let p = match *color { 
@@ -191,15 +185,16 @@ impl Board
         Board::get_positions(p, t)
     }
 
-    pub fn check_aligned(&self, pos: (usize, usize), color: &Square) -> bool {
-        if self.five_aligned(pos, color) {
-            let mut test_board = self.clone();
-            let to_remove = self.five_aligned_capture();
-            to_remove.iter()
-                .fold(0, |acc, &(x, y)| { test_board.state[x][y] = Square::Empty; acc });
-            test_board.five_aligned(pos, color)
-        }
-        else { false }
+    pub fn check_interruptable(&self, pos: (usize, usize), color: &Square) -> bool {
+        let possible_captures = self.check_capture_pos(&color.opposite());
+        possible_captures.iter().fold(false, |acc, &pos_cap| {
+            if let Move::Legal(test_board, _, _, _) = self.clone()
+                .play_at(Some(pos_cap), &color.opposite(), PreciseTime::now(), false) {
+                    acc || !test_board.five_aligned(pos, color)
+                        || test_board.get_score(&color.opposite()) >= 10
+                }
+            else { acc }
+        })
     }
 
     fn rec_explo(&self, color: &Square, x: i32, y: i32,
@@ -253,7 +248,7 @@ impl Board
                                                      })).collect::<Vec<_>>();
 
         let t = self.explode();
-        let capture_heuristic = |x| if x >= 10 { 500000 } else { x * x * x * x };
+        let capture_heuristic = |x| if x >= 10 { 500000 } else { x * x * x * x + 160};
         t.iter().fold(0, |acc, right| 
                       acc + player_patterns.iter().chain(opponent_patterns.iter())
                       .fold(0, |acc, &(ref pattern, score)|

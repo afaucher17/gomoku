@@ -1,4 +1,6 @@
 extern crate itertools;
+extern crate rand;
+extern crate time;
 
 mod check;
 mod square;

@@ -178,7 +178,7 @@ impl App {
         let last_move = match game.last_move {
             Some(Move::Illegal) => "Illegal move".to_string(),
             Some(Move::DoubleThrees) => "Double Three move".to_string(),
-            Some(Move::Legal(_, (x, y), ref color, _)) => format!("{} {} at ({}, {})", "Last move:", color, x.to_string(), y.to_string()),
+            Some(Move::Legal(_, (x, y), ref color, _)) => format!("{} {} at ({}, {})", "Last move:", color, (x + 1).to_string(), (y + 1).to_string()),
             Some(Move::OutOfBounds) => "Out of Bounds".to_string(),
             Some(Move::FiveNotInterrupted) => "Break the alignement!".to_string(),
             Some(Move::MoveIntoCapture) => "Cannot move into a capture".to_string(),

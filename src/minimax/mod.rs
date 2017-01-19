@@ -139,7 +139,7 @@ pub fn minimax(board: &Board,
         let mut v = Decision { score: i32::MIN, pos: None };
         //println!(" (DEPTH = {}, POS = {:?}, (MAXIMAZING):", depth, prev_play);
         for pos in plays {
-            if let Move::Legal(child, _, _, _) = board.play_at(Some(pos), &current_color, start)
+            if let Move::Legal(child, _, _, _) = board.play_at(Some(pos), &current_color, start, true)
             {
                 {
                     let decision = minimax(&child, depth - 1, alpha, beta, false, Some(pos), player, start, ttmap);
@@ -172,7 +172,7 @@ pub fn minimax(board: &Board,
     else {
         let mut v = Decision { score: i32::MAX, pos: None };
         for pos in plays {
-            if let Move::Legal(child, _, _, _) = board.play_at(Some(pos), &current_color, start) {
+            if let Move::Legal(child, _, _, _) = board.play_at(Some(pos), &current_color, start, true) {
                 {
                     let decision = minimax(&child, depth - 1, alpha, beta, true, Some(pos), player, start, ttmap);
                     if decision.pos == None { return decision; }

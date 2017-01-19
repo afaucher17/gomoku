@@ -1,14 +1,11 @@
-extern crate itertools;
-extern crate rand;
-extern crate time;
-
 use board::square::Square;
 
 use std::fmt;
 use std::cmp;
-use self::itertools::Itertools;
-use self::rand::Rng;
-use self::time::{PreciseTime, Duration};
+use board::itertools::Itertools;
+use board::rand::Rng;
+use board::rand;
+use board::time::{PreciseTime, Duration};
 
 #[derive(Clone)]
 #[derive(PartialEq)]
@@ -201,11 +198,7 @@ impl Board {
     }
 
     fn five_interrupted(&self, color: &Square) -> bool {
-        let capture_victory = match *color {
-            Square::White => (self.w_capture >= 10),
-            Square::Black => (self.b_capture >= 10),
-            Square::Empty => true
-        };
+        let capture_victory = self.get_score(color) >= 10;
         let mut interruption = true;
         if !capture_victory {
             if let BoardState::FiveAligned(ref aligned_player, pos) = self.game_state {
@@ -215,7 +208,7 @@ impl Board {
         capture_victory || interruption
     }
 
-    pub fn play_at(&self, pos: Option<(usize, usize)>, color: &Square, now: PreciseTime) -> Move {
+    pub fn play_at(&self, pos: Option<(usize, usize)>, color: &Square, now: PreciseTime, evaluation: bool) -> Move {
         match pos {
             Some((x, y)) => {
                 let mut clone = self.clone();
@@ -235,7 +228,9 @@ impl Board {
                                 Move::FiveNotInterrupted
                             }
                             else {
-                                clone.game_state = clone.get_game_state(pos.unwrap(), color);
+                                if evaluation {
+                                    clone.game_state = clone.get_game_state(pos.unwrap(), color);
+                                }
                                 clone.add_move(pos.unwrap(), color);
                                 Move::Legal(clone, (x, y), color.clone(), now.to(PreciseTime::now()))
                             }
@@ -255,7 +250,7 @@ impl Board {
             BoardState::Victory(Square::Black)
         }
         else if *color == Square::Black && self.five_aligned(pos, color) {
-            if self.check_aligned(pos, color) {
+            if !self.check_interruptable(pos, color) {
                 BoardState::Victory(Square::Black)
             }
             else {
@@ -266,7 +261,7 @@ impl Board {
             BoardState::Victory(Square::White)
         }
         else if *color == Square::White && self.five_aligned(pos, color) {
-            if self.check_aligned(pos, color) {
+            if !self.check_interruptable(pos, color) {
                 BoardState::Victory(Square::White)
             } else {
                 BoardState::FiveAligned(Square::White, pos)

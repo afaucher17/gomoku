@@ -1,7 +1,10 @@
-#![macro_use]
+#[macro_use]
+extern crate clap;
 extern crate gomoku;
 extern crate glium;
 extern crate glutin;
+
+const DEFAULT_MODE: &'static str = "vs_ai";
 
 use glium::DisplayBuild;
 use gomoku::board::{BoardState};
@@ -9,6 +12,24 @@ use gomoku::game::{Game};
 use gomoku::graphics::{Settings, App};
 
 fn main() {
+    let options = clap::App::new("Gomoku")
+        .version("0.1")
+        .author("tdieumeg <tdieumeg@users.noreply.github.com>")
+        .author("afaucher17 <afaucher17@users.noreply.github.com>")
+        .about("Gomoku is a game derived from Go. The rules consists in aligning five stones from your color or capturing 10 stones from the opponent.")
+        .arg(clap::Arg::with_name("mode")
+             .help("One or two player mode.")
+             .takes_value(true)
+             .short("m")
+             .long("mode")
+             .possible_values(&["two_players", "vs_ai"]))
+        .get_matches();
+
+    let mode = match options.value_of("mode").unwrap_or(DEFAULT_MODE) {
+        "vs_ai" => true,
+        "two_players" => false,
+        _ => false,
+    };
     let settings = Settings::new();
 
     let display = glium::glutin::WindowBuilder::new()
@@ -21,7 +42,7 @@ fn main() {
 
     let app = App::new(&display);
     let mut mouse_pos = [0f64, 0f64];
-    let mut game = Game::new(true);
+    let mut game = Game::new(mode);
 
     'main: loop {
         app.on_render(&display, &game);
