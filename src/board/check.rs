@@ -217,6 +217,9 @@ impl Board
 
     pub fn five_aligned(&self, pos: (usize, usize), color: &Square) -> bool {
         let (x, y) = (pos.0 as i32, pos.1 as i32);
+        if self.state[x as usize][y as usize] != *color {
+            return false;
+        }
         (self.rec_explo(color, x, y, 1, 1, 1)
          + self.rec_explo(color, x, y, -1, -1, 0)) > 4
             || (self.rec_explo(color, x, y, 1, 0, 1)

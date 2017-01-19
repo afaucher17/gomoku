@@ -29,6 +29,7 @@ pub enum Move
     Legal(Board, (usize, usize), Square, Duration),
     OutOfBounds,
     MoveIntoCapture,
+    FiveNotInterrupted,
     Other(&'static str),
 }
 
@@ -38,7 +39,7 @@ pub enum BoardState
     InProgress,
     Draw,
     Victory(Square),
-    FiveAligned(Square),
+    FiveAligned(Square, (usize, usize)),
 }
 
 pub struct Right {
@@ -199,6 +200,21 @@ impl Board {
         }
     }
 
+    fn five_interrupted(&self, color: &Square) -> bool {
+        let capture_victory = match *color {
+            Square::White => (self.w_capture >= 10),
+            Square::Black => (self.b_capture >= 10),
+            Square::Empty => true
+        };
+        let mut interruption = true;
+        if !capture_victory {
+            if let BoardState::FiveAligned(ref aligned_player, pos) = self.game_state {
+                interruption = !(*aligned_player == color.opposite() && self.five_aligned(pos, &aligned_player));
+            }
+        }
+        capture_victory || interruption
+    }
+
     pub fn play_at(&self, pos: Option<(usize, usize)>, color: &Square, now: PreciseTime) -> Move {
         match pos {
             Some((x, y)) => {
@@ -215,9 +231,14 @@ impl Board {
                         if !clone.check_free_threes(x as i32, y as i32, color)
                         {
                             clone = clone.check_capture(color, (x, y));
-                            clone.game_state = clone.get_game_state(pos.unwrap(), color);
-                            clone.add_move(pos.unwrap(), color);
-                            Move::Legal(clone, (x, y), color.clone(), now.to(PreciseTime::now()))
+                            if !clone.five_interrupted(color) {
+                                Move::FiveNotInterrupted
+                            }
+                            else {
+                                clone.game_state = clone.get_game_state(pos.unwrap(), color);
+                                clone.add_move(pos.unwrap(), color);
+                                Move::Legal(clone, (x, y), color.clone(), now.to(PreciseTime::now()))
+                            }
                         }
                         else { Move::DoubleThrees }
                     }
@@ -238,7 +259,7 @@ impl Board {
                 BoardState::Victory(Square::Black)
             }
             else {
-                BoardState::FiveAligned(Square::Black)
+                BoardState::FiveAligned(Square::Black, pos)
             }
         }
         else if self.w_capture >= 10 {
@@ -248,7 +269,7 @@ impl Board {
             if self.check_aligned(pos, color) {
                 BoardState::Victory(Square::White)
             } else {
-                BoardState::FiveAligned(Square::White)
+                BoardState::FiveAligned(Square::White, pos)
             }
         }
         else if self.check_full_board() {
@@ -307,7 +328,7 @@ impl Board {
 
     pub fn get_plays(&self, color: &Square) -> Vec<(usize, usize)> {
         match self.game_state {
-            BoardState::FiveAligned(ref col) if *col == color.opposite() => self.check_capture_pos(color),
+            BoardState::FiveAligned(ref col, _) if *col == color.opposite() => self.check_capture_pos(color),
             _ => {
                 let mut plays = self.check_threats();
                 let mut check_capture = self.check_capture_pos(color);

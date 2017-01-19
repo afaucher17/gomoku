@@ -35,7 +35,7 @@ fn main() {
                         pos = app.on_click(&mouse_pos, display.get_window().unwrap().get_inner_size_pixels().unwrap())
                     }
                     match game.board.game_state {
-                        BoardState::InProgress | BoardState::FiveAligned(_) => game.play(pos),
+                        BoardState::InProgress | BoardState::FiveAligned(_, _) => game.play(pos),
                         _ => ()
                     }
                 }
