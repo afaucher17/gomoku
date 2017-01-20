@@ -325,14 +325,15 @@ impl Board {
         match self.game_state {
             BoardState::FiveAligned(ref col, _) if *col == color.opposite() => self.check_capture_pos(color),
             _ => {
-                let mut plays = self.check_threats();
+                let mut plays = self.check_threats(color);
+                let size = plays.len();
                 let mut check_capture = self.check_capture_pos(color);
                 plays.append(&mut check_capture);
-                if plays.is_empty() {
+                if size == 0 {
                     let mut player_surroundings = self.get_surroundings(color);
                     plays.append(&mut player_surroundings);
                 }
-                if plays.is_empty() {
+                if size == 0 {
                     let mut opponent_surroundings = self.get_surroundings(&color.opposite());
                     plays.append(&mut opponent_surroundings);
                 }

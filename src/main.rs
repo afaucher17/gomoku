@@ -12,7 +12,7 @@ use gomoku::game::{Game};
 use gomoku::graphics::{Settings, App};
 
 fn main() {
-/*    let board = gomoku::board::Board::from(
+/*let board = gomoku::board::Board::from(
 "_WB_W______________
 _W_BW______________
 _B_________________

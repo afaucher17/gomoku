@@ -15,56 +15,72 @@ impl Board
 
         // East
         if x + 2 < 19 && x >= 1 {
-            if capture((0..4).map(|i| self.state[x + i - 1][y].to_char())
+            if capture((0..4).map(|i|
+                                  if x + i - 1 == x { color.to_char() }
+                                  else { self.state[x + i - 1][y].to_char() })
                        .collect::<String>()) {
                 return true;
             };
         }
         // West
         if x + 1 < 19 && x >= 2 {
-            if capture((0..4).map(|i| self.state[x - i + 1][y].to_char())
+            if capture((0..4).map(|i| 
+                                  if x - i + 1 == x { color.to_char() }
+                                  else { self.state[x - i + 1][y].to_char() })
                        .collect::<String>()) {
                 return true;
             };
         }
         // South
         if y + 2 < 19 && y >= 1 {
-            if capture((0..4).map(|i| self.state[x][y + i - 1].to_char())
+            if capture((0..4).map(|i|
+                                  if y + i - 1 == y { color.to_char() }
+                                  else { self.state[x][y + i - 1].to_char() })
                        .collect::<String>()) {
                 return true;
             };
         }
         // North
         if y + 1 < 19 && y >= 2 {
-            if capture((0..4).map(|i| self.state[x][y - i + 1].to_char())
+            if capture((0..4).map(|i|
+                                  if y - i + 1 == y { color.to_char() } 
+                                  else { self.state[x][y - i + 1].to_char() })
                        .collect::<String>()) {
                 return true;
             };
         }
         // North-East
         if y + 1 < 19 && y >= 2 && x + 2 < 19 && x >= 1 {
-            if capture((0..4).map(|i| self.state[x + i - 1][y - i + 1].to_char())
+            if capture((0..4).map(|i| 
+                                  if x + i - 1 == x && y - i + 1 == y { color.to_char() }
+                                  else { self.state[x + i - 1][y - i + 1].to_char() })
                        .collect::<String>()) {
                 return true;
             };
         }
         // North-West
         if y + 1 < 19 && y >= 2 && x + 1 < 19 && x >= 2 {
-            if capture((0..4).map(|i| self.state[x - i + 1][y - i + 1].to_char())
+            if capture((0..4).map(|i|
+                                  if x - i + 1 == x && y - i + 1 == y { color.to_char() } 
+                                  else { self.state[x - i + 1][y - i + 1].to_char() })
                        .collect::<String>()) {
                 return true;
             };
         }
         // South-East
         if y + 2 < 19 && y >= 1 && x + 2 < 19 && x >= 1 {
-            if capture((0..4).map(|i| self.state[x + i - 1][y + i - 1].to_char())
+            if capture((0..4).map(|i|
+                                  if x + i - 1 == x && y + i - 1 == y { color.to_char() }
+                                  else { self.state[x + i - 1][y + i - 1].to_char()})
                        .collect::<String>()) {
                 return true;
             };
         }
         // South-West
         if y + 2 < 19 && y >= 1 && x + 1 < 19 && x >= 2 {
-            if capture((0..4).map(|i| self.state[x - i + 1][y + i - 1].to_char())
+            if capture((0..4).map(|i|
+                                  if x - i + 1 == x && y + i - 1 == y { color.to_char() }
+                                  else { self.state[x - i + 1][y + i - 1].to_char()})
                        .collect::<String>()) {
                 return true;
             };
@@ -157,9 +173,9 @@ impl Board
         pos
     }
 
-    pub fn check_threats(&self) -> Vec<(usize, usize)> {
+    pub fn check_threats(&self, color: &Square) -> Vec<(usize, usize)> {
         let p = vec![("WWWW-", vec![4]), ("BBBB-", vec![4]),
-        ("WWWW-W", vec![3]), ("BBBB-B", vec![3]),
+        ("WWWW-W", vec![4]), ("BBBB-B", vec![4]),
         ("WW-WW", vec![2]), ("BB-BB", vec![2]),
         ("W-WWW", vec![1]), ("B-BBB", vec![1]),
         ("-WWWW", vec![0]), ("-BBBB", vec![0]),
@@ -171,6 +187,9 @@ impl Board
 
         let t = self.explode();
         Board::get_positions(p, t)
+            .into_iter()
+            .filter(|&x| !self.check_moveintocapture(color, x))
+            .collect::<Vec<_>>()
     }
 
     pub fn check_capture_pos(&self, color: &Square) -> Vec<(usize, usize)>
@@ -183,6 +202,9 @@ impl Board
 
         let t = self.explode();
         Board::get_positions(p, t)
+            .into_iter()
+            .filter(|&x| !self.check_moveintocapture(color, x))
+            .collect::<Vec<_>>()
     }
 
     pub fn check_interruptable(&self, pos: (usize, usize), color: &Square) -> bool {
