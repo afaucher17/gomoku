@@ -12,6 +12,37 @@ use gomoku::game::{Game};
 use gomoku::graphics::{Settings, App};
 
 fn main() {
+/*    let board = gomoku::board::Board::from(
+"_WB_W______________
+_W_BW______________
+_B_________________
+____B______________
+_W__W_____W________
+_____B___B_________
+___________________
+_______W___________
+___________________
+_____B___B_________
+____W_____W________
+___________________
+___________________
+___________________
+___________________
+___________________
+___________________
+___________________
+___________________");
+
+    println!("{:?}", board);
+    println!("{:?}", board.play_at(Some((0, 3)), &gomoku::board::Square::Black, time::PreciseTime::now(), true));
+    println!("{:?}", board.play_at(Some((1, 2)), &gomoku::board::Square::Black, time::PreciseTime::now(), true));
+    println!("{:?}", board.play_at(Some((2, 4)), &gomoku::board::Square::Black, time::PreciseTime::now(), true));
+    println!("{:?}", board.play_at(Some((3, 1)), &gomoku::board::Square::Black, time::PreciseTime::now(), true));
+    println!("{:?}", board.play_at(Some((6, 6)), &gomoku::board::Square::Black, time::PreciseTime::now(), true));
+    println!("{:?}", board.play_at(Some((6, 8)), &gomoku::board::Square::Black, time::PreciseTime::now(), true));
+    println!("{:?}", board.play_at(Some((8, 6)), &gomoku::board::Square::Black, time::PreciseTime::now(), true));
+    println!("{:?}", board.play_at(Some((8, 8)), &gomoku::board::Square::Black, time::PreciseTime::now(), true));
+*/
     let options = clap::App::new("Gomoku")
         .version("0.1")
         .author("tdieumeg <tdieumeg@users.noreply.github.com>")

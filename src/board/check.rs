@@ -22,7 +22,7 @@ impl Board
         }
         // West
         if x + 1 < 19 && x >= 2 {
-            if capture((0..4).map(|i| self.state[x + i - 2][y].to_char())
+            if capture((0..4).map(|i| self.state[x - i + 1][y].to_char())
                        .collect::<String>()) {
                 return true;
             };
@@ -36,21 +36,21 @@ impl Board
         }
         // North
         if y + 1 < 19 && y >= 2 {
-            if capture((0..4).map(|i| self.state[x][y + i - 2].to_char())
+            if capture((0..4).map(|i| self.state[x][y - i + 1].to_char())
                        .collect::<String>()) {
                 return true;
             };
         }
         // North-East
         if y + 1 < 19 && y >= 2 && x + 2 < 19 && x >= 1 {
-            if capture((0..4).map(|i| self.state[x + i - 1][y + i - 2].to_char())
+            if capture((0..4).map(|i| self.state[x + i - 1][y - i + 1].to_char())
                        .collect::<String>()) {
                 return true;
             };
         }
         // North-West
         if y + 1 < 19 && y >= 2 && x + 1 < 19 && x >= 2 {
-            if capture((0..4).map(|i| self.state[x + i - 2][y + i - 2].to_char())
+            if capture((0..4).map(|i| self.state[x - i + 1][y - i + 1].to_char())
                        .collect::<String>()) {
                 return true;
             };
@@ -64,7 +64,7 @@ impl Board
         }
         // South-West
         if y + 2 < 19 && y >= 1 && x + 1 < 19 && x >= 2 {
-            if capture((0..4).map(|i| self.state[x + i - 2][y + i - 1].to_char())
+            if capture((0..4).map(|i| self.state[x - i + 1][y + i - 1].to_char())
                        .collect::<String>()) {
                 return true;
             };
